@@ -217,17 +217,41 @@
       font-weight: 600;
       line-height: 1.32;
       color: var(--ink);
-      margin-bottom: 6px;
+      margin-bottom: 10px;
     }
 
-    .card p {
+    /* ---------- Encadré de vulgarisation ---------- */
+    .vulg-box {
+      background: var(--brand-soft);
+      border-left: 3.5px solid var(--brand);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 10px 0 12px;
+    }
+    .vulg-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--brand);
+      margin-bottom: 4px;
+    }
+    .vulg-box p {
       font-size: 14.5px;
+      color: var(--ink);
+      line-height: 1.55;
+      display: block;
+      overflow: visible;
+      -webkit-line-clamp: unset;
+    }
+
+    .card-summary {
+      font-size: 14px;
       color: var(--ink-2);
       line-height: 1.55;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
     .card-foot {
@@ -360,11 +384,45 @@
     }
     .block p + p { margin-top: 10px; }
 
-    .block.workflow {
+    .block.vulg-hero {
       background: var(--brand-soft);
-      border-color: transparent;
+      border: 1.5px solid var(--brand);
     }
-    .block.workflow h2 { color: var(--brand); }
+    .block.vulg-hero h2 {
+      color: var(--brand);
+      font-size: 13px;
+    }
+    .block.vulg-hero p {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.65;
+    }
+
+    details.block summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-2);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    details.block summary::-webkit-details-marker { display: none; }
+    details.block summary::after {
+      content: "Afficher les détails techniques ↓";
+      font-size: 12px;
+      color: var(--brand);
+      font-weight: 600;
+    }
+    details.block[open] summary {
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    details.block[open] summary::after {
+      content: "Masquer ↑";
+    }
 
     ul.kp {
       list-style: none;
@@ -457,7 +515,7 @@
       <img class="logo" src="assets/icon.svg" alt="" />
       <div class="brand">
         <h1>News AI</h1>
-        <p>Avancées technologiques, papers &amp; implantation workflow</p>
+        <p>Les nouvelles méthodes IA expliquées simplement &amp; appliquées à tes projets</p>
       </div>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Thème">🌙</button>
     </div>
@@ -468,7 +526,7 @@
     <div class="container">
       <div class="search">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="q" type="search" placeholder="Rechercher une méthode, un paper, un projet (GRPO, ColPali, MedSAM 2, HippoRAG…)" autocomplete="off" oninput="render()" />
+        <input id="q" type="search" placeholder="Rechercher un principe, une analogie ou un projet (PDF, imagerie, audio, code…)" autocomplete="off" oninput="render()" />
       </div>
       <nav class="tabs" id="tabs" aria-label="Rubriques"></nav>
     </div>
@@ -476,6 +534,13 @@
 
   <!-- Liste unique -->
   <main class="container">
+    <div class="vulg-box" style="margin-top:0;margin-bottom:16px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--brand);">
+      <div class="vulg-label">👋 Comment lire cette page (zéro jargon)</div>
+      <p style="font-size:14px;color:var(--ink-2)">
+        Les publications scientifiques en IA utilisent toutes des noms barbares (<em>GRPO, ColPali, HippoRAG…</em>).
+        Pour chaque méthode ci-dessous, l'encadré <strong>« 💡 En clair »</strong> t'explique le principe en 20 secondes avec une analogie simple. Si l'idée te plaît pour un de tes projets, clique dessus et copie le prompt pour T3 Code.
+      </p>
+    </div>
     <div class="section-info">
       <span id="secInfo"></span>
     </div>
@@ -488,7 +553,7 @@
       <div class="container">
         <button class="back" onclick="closeReader()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          Retour aux avancées
+          Retour à la liste
         </button>
       </div>
       <span class="progress" id="bar"></span>
@@ -601,10 +666,10 @@
               <span style="margin-left:auto">${esc(s.date || '')}</span>
             </div>
             <h3>${esc(s.title)}</h3>
-            ${s.summary ? `<p>${esc(s.summary)}</p>` : ''}
+            ${s.summary ? `<p class="card-summary">${esc(s.summary)}</p>` : ''}
             <div class="card-foot">
               <span>Publication / Signal Live</span>
-              <span class="read-link">Décrypter &amp; adapter →</span>
+              <span class="read-link">Vulgariser avec T3 Code →</span>
             </div>
           </article>
         `).join('');
@@ -616,8 +681,9 @@
         if (currentTab !== 'all' && item.category_id !== currentTab) return false;
         if (q) {
           const hay = [
-            item.title_fr, item.summary_fr, item.technical_breakthrough_fr,
-            item.workflow_how_to_fr, item.paper_ref, item.source,
+            item.title_fr, item.vulgarisation_fr, item.summary_fr,
+            item.technical_breakthrough_fr, item.workflow_how_to_fr,
+            item.paper_ref, item.source,
             (item.target_projects || []).join(' ')
           ].join(' ').toLowerCase();
           if (!hay.includes(q)) return false;
@@ -628,7 +694,7 @@
       const catObj = categories.find(c => c.id === currentTab);
       infoEl.textContent = catObj
         ? `${catObj.description}`
-        : `${filtered.length} avancées technologiques & méthodes IA décryptées pour ton workflow`;
+        : `${filtered.length} méthodes IA expliquées sans jargon, avec analogie concrète`;
 
       if (filtered.length === 0) {
         listEl.innerHTML = `<div class="card" style="text-align:center;color:var(--ink-3);cursor:default">Aucun résultat pour cette recherche.</div>`;
@@ -649,10 +715,15 @@
               <span class="tag-paper">${esc(item.date_fr || item.date)}</span>
             </div>
             <h3>${esc(item.title_fr)}</h3>
-            <p>${esc(item.summary_fr)}</p>
+            ${item.vulgarisation_fr ? `
+              <div class="vulg-box">
+                <div class="vulg-label">💡 En clair — Le principe sans jargon</div>
+                <p>${esc(item.vulgarisation_fr)}</p>
+              </div>
+            ` : `<p class="card-summary">${esc(item.summary_fr)}</p>`}
             <div class="card-foot">
               <div class="projs">${projBadges}</div>
-              <span class="read-link">Lire la méthode →</span>
+              <span class="read-link">Voir comment l'utiliser →</span>
             </div>
           </article>
         `;
@@ -679,34 +750,38 @@
           <h1>${esc(a.title_fr)}</h1>
           <div class="doc-ref">
             ${a.paper_ref ? `<span>📄 ${esc(a.paper_ref)}</span>` : ''}
-            ${a.source_url ? `<a href="${esc(a.source_url)}" target="_blank" rel="noopener">Ouvrir la publication originale ↗</a>` : ''}
+            ${a.source_url ? `<a href="${esc(a.source_url)}" target="_blank" rel="noopener">Publication originale ↗</a>` : ''}
           </div>
         </div>
 
-        <div class="block">
-          <h2>Ce qui change</h2>
-          <p>${esc(a.summary_fr)}</p>
-        </div>
+        ${a.vulgarisation_fr ? `
+          <div class="block vulg-hero">
+            <h2>💡 En clair — Le principe expliqué simplement</h2>
+            <p>${esc(a.vulgarisation_fr)}</p>
+          </div>
+        ` : ''}
 
         <div class="block">
-          <h2>Comment fonctionne la méthode sous le capot</h2>
-          <p>${esc(a.technical_breakthrough_fr || '')}</p>
-          ${kpHtml ? `<ul class="kp">${kpHtml}</ul>` : ''}
-        </div>
-
-        <div class="block workflow">
-          <h2>Comment l'implanter dans ton workflow (${esc(projs)})</h2>
+          <h2>🎯 À quoi ça sert concrètement dans tes projets (${esc(projs)})</h2>
           <p>${esc(a.workflow_how_to_fr)}</p>
           ${stepsHtml ? `<ul class="kp">${stepsHtml}</ul>` : ''}
         </div>
 
         <div class="block">
-          <h2>Prompt T3 Code prêt à coller</h2>
+          <h2>📋 Prompt T3 Code prêt à coller</h2>
+          <p style="font-size:13.5px;color:var(--ink-3);margin-bottom:6px">Copie ce bloc et colle-le dans T3 Code quand tu es dans le projet concerné :</p>
           <div class="prompt-box" id="promptText">${esc(a.t3_prompt)}</div>
           <button class="btn-primary" onclick="copyText(document.getElementById('promptText').textContent)">
             📋 Copier le prompt pour T3 Code
           </button>
         </div>
+
+        <details class="block">
+          <summary>🔬 Pour aller plus loin (détails techniques &amp; paper)</summary>
+          <p>${esc(a.summary_fr)}</p>
+          <p style="margin-top:10px">${esc(a.technical_breakthrough_fr || '')}</p>
+          ${kpHtml ? `<ul class="kp">${kpHtml}</ul>` : ''}
+        </details>
       `;
 
       const r = document.getElementById('reader');
