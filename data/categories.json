@@ -1,32 +1,32 @@
 [
   {
-    "id": "agents_harness",
-    "label": "🤖 Agents, T3 Code & MCP",
-    "short": "🤖 Agents & MCP",
-    "description": "Orchestration multi-modèles (Gemini 4 Argon + Claude Opus), Council, Subagents parallèles, Context Caching et serveurs MCP."
+    "id": "rl_reasoning_methods",
+    "label": "🧠 Raisonnement, RL & Post-Training (GRPO, Test-Time Compute)",
+    "short": "🧠 RL & Raisonnement",
+    "description": "Algorithmes d'apprentissage par renforcement à récompenses vérifiables (GRPO, RLVR), émergence de la chaîne de pensée sans SFT et mise à l'échelle du calcul à l'inférence."
   },
   {
-    "id": "medical_vision",
-    "label": "🩻 Vision, Imagerie & PDF",
-    "short": "🩻 Vision & Radio",
-    "description": "VLM médicaux, OCR PDF.js haute fidélité, pré-annotation de coupes IRM/TDM/Écho, génération de quiz et CR-types radiologiques."
+    "id": "multimodal_rag_graphs",
+    "label": "📚 RAG Visuel & Graphes de Mémoire (ColPali, HippoRAG 2, LightRAG)",
+    "short": "📚 ColPali & GraphRAG",
+    "description": "Indexation tardive de patchs visuels (ColBERT + VLM sans OCR) et mémoire associative sur graphe via Personalized PageRank."
   },
   {
-    "id": "rag_biblio_brain",
-    "label": "📚 Biblio, PubMed & 2nd Brain",
-    "short": "📚 Biblio & Brain",
-    "description": "Veille automatisée PubMed → JSON structuré → Zotero → Obsidian (Second Brain Cochin) avec anonymisation RGPD stricte."
+    "id": "medical_foundation_vlm",
+    "label": "🩻 Modèles Fondations Médicaux 2D/3D (MedSAM 2, MedGemma)",
+    "short": "🩻 MedSAM 2 & MedGemma",
+    "description": "Segmentation volumétrique 3D TDM/IRM par mémoire d'attention streaming et VLM cliniques entraînés par RL multimodal."
   },
   {
-    "id": "local_first_webgpu",
-    "label": "⚡ Local-First, SQLite & WebGPU",
-    "short": "⚡ WebGPU & Data",
-    "description": "Inférence locale dans le navigateur (WebGPU / Transformers.js), recherche sémantique hors-ligne et pipelines SQLite/Supabase."
+    "id": "inference_grammar_edge",
+    "label": "⚡ Inférence, Décodage & Edge (EAGLE-3, XGrammar-2, Kokoro WebGPU, MLX)",
+    "short": "⚡ Décodage & WebGPU",
+    "description": "Décodage spéculatif par fusion de couches cachées (EAGLE-3), automates à pile pour JSON/outils (XGrammar-2) et synthèse/inférence locale Apple Silicon & WebGPU."
   },
   {
-    "id": "voice_automation_iot",
-    "label": "🎙️ Voix, Automatisation & IoT",
-    "short": "🎙️ Voix & Auto",
-    "description": "Dictée vocale radiologique structurée, agents Python locaux (iMessage/Sheet/Takeout), Mac mini M4 et ESP32 Xiaozhi."
+    "id": "agentic_protocols_swe",
+    "label": "🤖 Ingénierie Agentique & Protocoles (Agentless, SWE-bench, CA-MCP)",
+    "short": "🤖 Agentless & MCP",
+    "description": "Localisation hiérarchique déterministe vs agents autonomes (Agentless), Context-Aware MCP et Context Rot en fenêtre longue."
   }
 ]

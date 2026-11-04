@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-Générateur & Synchroniseur de la base de connaissances News AI (@Mrthomaslef).
-- Construit `data/news.json`, `data/projects.json` et `data/embedded_data.js`
-- Option `--fetch-live` : interroge en direct Hacker News Algolia API & ArXiv API
-  pour enrichir le flux avec les dernières publications techniques IA.
+Générateur & Synchroniseur de la base News AI (@Mrthomaslef) — Vraies Avancées Technologiques & Nouvelles Méthodes IA.
+- Construit `data/news.json`, `data/projects.json`, `data/categories.json` et `data/embedded_data.js`
+- Option `--fetch-live` : interroge en direct :
+  1. Hugging Face Daily Papers API (`https://huggingface.co/api/daily_papers`)
+  2. ArXiv API (`cs.AI`, `cs.CL`, `cs.CV`, `eess.IV`)
+  3. Hacker News Algolia API filtré strictement sur les publications IA / ML / LLM / Papers.
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import re
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -22,34 +25,34 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 CATEGORIES = [
     {
-        "id": "agents_harness",
-        "label": "🤖 Agents, T3 Code & MCP",
-        "short": "🤖 Agents & MCP",
-        "description": "Orchestration multi-modèles (Gemini 4 Argon + Claude Opus), Council, Subagents parallèles, Context Caching et serveurs MCP."
+        "id": "rl_reasoning_methods",
+        "label": "🧠 Raisonnement, RL & Post-Training (GRPO, Test-Time Compute)",
+        "short": "🧠 RL & Raisonnement",
+        "description": "Algorithmes d'apprentissage par renforcement à récompenses vérifiables (GRPO, RLVR), émergence de la chaîne de pensée sans SFT et mise à l'échelle du calcul à l'inférence."
     },
     {
-        "id": "medical_vision",
-        "label": "🩻 Vision, Imagerie & PDF",
-        "short": "🩻 Vision & Radio",
-        "description": "VLM médicaux, OCR PDF.js haute fidélité, pré-annotation de coupes IRM/TDM/Écho, génération de quiz et CR-types radiologiques."
+        "id": "multimodal_rag_graphs",
+        "label": "📚 RAG Visuel & Graphes de Mémoire (ColPali, HippoRAG 2, LightRAG)",
+        "short": "📚 ColPali & GraphRAG",
+        "description": "Indexation tardive de patchs visuels (ColBERT + VLM sans OCR) et mémoire associative sur graphe via Personalized PageRank."
     },
     {
-        "id": "rag_biblio_brain",
-        "label": "📚 Biblio, PubMed & 2nd Brain",
-        "short": "📚 Biblio & Brain",
-        "description": "Veille automatisée PubMed → JSON structuré → Zotero → Obsidian (Second Brain Cochin) avec anonymisation RGPD stricte."
+        "id": "medical_foundation_vlm",
+        "label": "🩻 Modèles Fondations Médicaux 2D/3D (MedSAM 2, MedGemma)",
+        "short": "🩻 MedSAM 2 & MedGemma",
+        "description": "Segmentation volumétrique 3D TDM/IRM par mémoire d'attention streaming et VLM cliniques entraînés par RL multimodal."
     },
     {
-        "id": "local_first_webgpu",
-        "label": "⚡ Local-First, SQLite & WebGPU",
-        "short": "⚡ WebGPU & Data",
-        "description": "Inférence locale dans le navigateur (WebGPU / Transformers.js), recherche sémantique hors-ligne et pipelines SQLite/Supabase."
+        "id": "inference_grammar_edge",
+        "label": "⚡ Inférence, Décodage & Edge (EAGLE-3, XGrammar-2, Kokoro WebGPU, MLX)",
+        "short": "⚡ Décodage & WebGPU",
+        "description": "Décodage spéculatif par fusion de couches cachées (EAGLE-3), automates à pile pour JSON/outils (XGrammar-2) et synthèse/inférence locale Apple Silicon & WebGPU."
     },
     {
-        "id": "voice_automation_iot",
-        "label": "🎙️ Voix, Automatisation & IoT",
-        "short": "🎙️ Voix & Auto",
-        "description": "Dictée vocale radiologique structurée, agents Python locaux (iMessage/Sheet/Takeout), Mac mini M4 et ESP32 Xiaozhi."
+        "id": "agentic_protocols_swe",
+        "label": "🤖 Ingénierie Agentique & Protocoles (Agentless, SWE-bench, CA-MCP)",
+        "short": "🤖 Agentless & MCP",
+        "description": "Localisation hiérarchique déterministe vs agents autonomes (Agentless), Context-Aware MCP et Context Rot en fenêtre longue."
     }
 ]
 
@@ -66,15 +69,15 @@ PROJECTS = [
         "summary": "Portail « Papier Radio / Négatoscope » donnant accès en 1 tap aux 7 outils des internes de Radiologie B à Cochin.",
         "aiOpportunities": [
             {
-                "title": "Recherche fédérée Omnibox (⌘K) sur les 7 apps Cochin",
+                "title": "Recherche fédérée Omnibox (⌘K) hybride (BM25 + Synonymes Médicaux)",
                 "impact": "Quick Win",
-                "detail": "Un champ unique en haut de COCHIN·OS qui cherche simultanément un poste DECT/console dans l'Annuaire, une fiche parmi les 75 gestes du Guide Infiltrations, un article BiblioOstéo et un cours des Archives.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/guide-interne-cochin-os, ajoute une barre de recherche universelle (Omnibox ⌘K et bouton mobile) qui indexe en local les postes de ./annuaire/, les 75 fiches de ./infiltrations/guide-data.json et les articles de BiblioOstéo pour ouvrir directement le bon outil ou numéro en 1 tap."
+                "detail": "Appliquer la méthode de recherche hybride lexicale + expansion de synonymes sur les 75 fiches du Guide Infiltrations, l'Annuaire Cochin et BiblioOstéo depuis un champ unique.",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/guide-interne-cochin-os, ajoute une barre de recherche universelle (Omnibox ⌘K et bouton mobile) utilisant un score BM25 + dictionnaire de synonymes ostéo-articulaires qui indexe en local les postes de ./annuaire/, les 75 fiches de ./infiltrations/guide-data.json et les articles de BiblioOstéo."
             },
             {
-                "title": "Assistant « Garde & Prise de Poste » hors-ligne",
+                "title": "Assistant « Garde & Prise de Poste » déterministe (Arbre Anticoagulants & RI)",
                 "impact": "Haute Valeur",
-                "detail": "Arbre de décision instantané pour l'interne (gestion des anticoagulants Eliquis/Plavix avant geste RI, protocole allergie iode, numéros d'urgence Achard/Ollier).",
+                "detail": "Arbre de décision instantané hors-ligne pour l'interne (fenêtres d'arrêt Eliquis/Plavix avant geste RI profonde vs superficielle, prémédication allergie iode, numéros DECT Achard/Ollier).",
                 "prompt": "Dans /Users/thomaslefevre/.t3/projects/guide-interne-cochin-os, crée un tiroir rapide « Check-list Pré-Geste RI & Anticoagulants » basé sur les fiches de /Users/thomaslefevre/2nd brain/02 - Radiologie Interventionnelle (RI) et le Guide Infiltrations."
             }
         ]
@@ -91,16 +94,16 @@ PROJECTS = [
         "summary": "Veille bibliographique en RI & imagerie ostéo-articulaire calquée sur l'Agenda Interventionnel Cochin avec synchro Zotero.",
         "aiOpportunities": [
             {
-                "title": "Pipeline PMID / PDF → Fiche structurée FR + Lien Second Brain automatique",
+                "title": "Décodage contraint par grammaire (JSON Schema strict type XGrammar / Outlines) dans add_article.py",
                 "impact": "Quick Win",
-                "detail": "En passant un simple PMID ou PDF dans `scripts/add_article.py`, générer automatiquement le résumé structuré FR, le protocole technique (aiguille, fenêtre bléomycine, suivi IRM), le lien `cochin_link` et la note Obsidian dans `2nd brain/05 - Biblio`.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblioosteo/scripts/add_article.py, ajoute un mode qui prend une liste de PMIDs ou un PDF local, récupère les métadonnées PubMed + Impact Factor, structure automatiquement la fiche JSON (title_fr, summary_fr_short, protocol_fr, cochin_link, key_points_fr), met à jour data/embedded_data.js et crée la fiche correspondante dans /Users/thomaslefevre/2nd brain/05 - Biblio, Zotero & Enseignement."
+                "detail": "Forcer l'extraction d'un PMID ou d'un PDF médical selon un schéma Pydantic/JSON Schema strict garantissant 0 erreur sur les champs cliniques (`protocol_fr`, `cochin_link`, `key_points_fr`) et la création simultanée de la fiche Obsidian.",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblioosteo/scripts/add_article.py, implante un validateur de schéma JSON strict (style Constrained Decoding / Pydantic) qui prend un PMID ou PDF local, récupère PubMed E-Utilities, génère la fiche structurée sans hallucination de format, reconstruit data/embedded_data.js et crée la note reliée dans /Users/thomaslefevre/2nd brain/05 - Biblio, Zotero & Enseignement."
             },
             {
-                "title": "Mode « Comparateur de Protocoles RI » (ex. Cryo Desmoïdes vs RF Ostéome)",
+                "title": "Matrice comparative des paramètres opératoires RI extraits de la littérature",
                 "impact": "Moyen Terme",
-                "detail": "Vue tableau synthétique extrayant des 24+ articles les paramètres opératoires exacts (cycles de congélation, marges de sécurité, hydrodissection, suivi).",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblioosteo/index.html, ajoute un onglet « ⚡ Protocoles RI comparés » qui synthétise sous forme de tableau filtrable les paramètres techniques extraits de chaque article (indication, matériel, protocole, suivi)."
+                "detail": "Vue tableau synthétique croisant les 24+ articles sur les paramètres physiques exacts (puissance RF, cycles d'argon cryoablation, fenêtre bléomycine 8–40 min, calibre trocart).",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblioosteo/index.html, ajoute un onglet « ⚡ Matrice Protocoles RI » qui synthétise sous forme de tableau filtrable les paramètres techniques extraits de chaque article (indication, matériel, protocole thermique/chimique, suivi)."
             }
         ]
     },
@@ -116,16 +119,16 @@ PROJECTS = [
         "summary": "Veille bibliographique pour Marie en pédiatrie générale et infectiologie pédiatrique/adulte avec Impact Factor et Zotero.",
         "aiOpportunities": [
             {
-                "title": "Alerte automatique PubMed RSS sur les revues à haut Impact Factor (NEJM, Lancet, JAMA Peds, PIDJ)",
+                "title": "Synthèse vocale neuronale locale Kokoro-82M WebGPU / TTS (« Podcast Biblio 2 min »)",
                 "impact": "Quick Win",
-                "detail": "Script Python hebdomadaire qui détecte les nouveaux essais randomisés et recommandations GPIP/SPILF/ECIL et prépare les brouillons dans `data/editorial.json`.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblio-marie/scripts/, crée un script discover_pubmed.py qui interroge l'API NCBI E-utilities sur les essais cliniques et guidelines récents en infectiologie pédiatrique (GPIP, SPILF, VRS, sepsis, IOA) et pré-remplit les candidats à valider pour data/editorial.json."
+                "detail": "Intégrer la lecture audio fluide de la synthèse française et du bloc « En pratique » dans le lecteur d'article (via Kokoro-82M ONNX WebGPU ou Web Speech API en fallback instantané).",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblio-marie/index.html, ajoute dans la barre du lecteur d'article un bouton « 🎧 Écouter la synthèse » qui lit le titre, le résumé et l'encadré 'En pratique' avec contrôle de vitesse (1x, 1.25x, 1.5x) et intègre le standard Pull-to-Refresh mobile."
             },
             {
-                "title": "Mode Audio « Podcast Flash 2 min » (Web Speech / TTS)",
+                "title": "Scanner automatique PubMed E-Utilities sur les essais randomisés & recos GPIP / SPILF",
                 "impact": "Quick Win",
-                "detail": "Bouton d'écoute mains-libres dans le lecteur d'article pour écouter la synthèse française et « En pratique » en déplacement.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblio-marie/index.html, ajoute un bouton « 🎧 Écouter la synthèse » dans la barre du lecteur d'article (avec contrôle de vitesse 1x / 1.25x / 1.5x via speechSynthesis) et intègre le standard Pull-to-Refresh mobile."
+                "detail": "Script Python interrogeant NCBI sur les publications à fort Impact Factor en infectiologie pédiatrique et pré-structurant les fiches dans `data/editorial.json`.",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblio-marie/scripts/, crée un script discover_pubmed.py qui interroge l'API NCBI E-utilities sur les essais cliniques et guidelines récents en infectiologie pédiatrique (GPIP, SPILF, VRS, sepsis, IOA) et pré-remplit les candidats à valider pour data/editorial.json."
             }
         ]
     },
@@ -141,10 +144,10 @@ PROJECTS = [
         "summary": "Partage et visionneuse des présentations PDF (Bone Club, Cas du mardi, Biblio du vendredi, Cours) avec indexation par diapo.",
         "aiOpportunities": [
             {
-                "title": "Auto-Tagging & Résumé à l'import du PDF + Conversion 1-Clic vers Quiz Imagerie",
+                "title": "Indexation Visuelle par Patchs (méthode ColPali / Late Interaction) sur les diapos PDF",
                 "impact": "Haute Valeur",
-                "detail": "Lors du dépôt d'un PDF avec PDF.js, extraire automatiquement du texte des diapos la modalité (IRM/TDM/Radio), l'articulation, les mots-clés sémiologiques et permettre d'exporter une diapo clé vers Quiz Imagerie.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/archive-des-internes, améliore le flux de dépôt PDF pour détecter automatiquement depuis le texte extrait par PDF.js la catégorie, la région anatomique, la modalité et proposer les synonymes diagnostiques."
+                "detail": "Les diapos de radiologie contiennent souvent des coupes IRM/TDM annotées de flèches ou des tableaux de classification que l'OCR texte classique manque. L'indexation multimodale de la miniature de chaque diapo permet de retrouver visuellement une diapo précise.",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/archive-des-internes, enrichis le pipeline d'indexation PDF.js pour extraire à la fois le texte structuré de chaque diapo et permettre d'exporter en 1 clic une diapo d'imagerie recadrée vers /Users/thomaslefevre/.t3/projects/quiz-image-3."
             }
         ]
     },
@@ -160,16 +163,10 @@ PROJECTS = [
         "summary": "Défi diagnostique rapide sur image unique avec validation souple (synonymes + tolérance orthographique) et Studio d'ajout.",
         "aiOpportunities": [
             {
-                "title": "Générateur automatique de synonymes, variantes orthographiques et indices sémiologiques dans #/studio",
-                "impact": "Quick Win",
-                "detail": "Quand tu colles une image (`Cmd+V`) et saisis le diagnostic principal dans `#/studio`, pré-remplir automatiquement tous les synonymes français/anglais, acronymes et mots-clés requis pour la validation souple.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/quiz-image-3, enrichis le Studio (#/studio) avec un dictionnaire ostéo-articulaire intelligent qui génère automatiquement les synonymes, variantes d'accents/abréviations, la région anatomique et les indices sémiologiques dès qu'on tape le nom de la pathologie."
-            },
-            {
-                "title": "Révision espacée (SRS / Anki-like) sur les cas « À revoir »",
-                "impact": "Quick Win",
-                "detail": "Prioriser automatiquement dans le mode Focus Quiz les cas échoués il y a 1, 3 ou 7 jours.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/quiz-image-3, ajoute un algorithme de répétition espacée léger dans localStorage pour proposer en priorité les cas diagnostiques échoués ou hésitants."
+                "title": "Évaluation par Récompense Vérifiable (méthode RLVR / DeepSeek-R1) & Décomposition Sémiologique",
+                "impact": "Haute Valeur",
+                "detail": "Inspiré du paradigme RLVR (Reinforcement Learning with Verifiable Rewards) : décomposer la validation d'un cas en 3 sous-récompenses vérifiables (1. Anomalie élémentaire / signe radiologique, 2. Topographie exacte, 3. Diagnostic étiologique) avec indice progressif si l'interne trouve la lésion mais pas l'éponyme.",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/quiz-image-3, enrichis le moteur de validation souple et le Studio (#/studio) pour supporter une validation graduée en 2 paliers : détection des signes sémiologiques clés (indice débloqué si le signe est bon) puis validation du diagnostic final avec génération automatique des synonymes."
             }
         ]
     },
@@ -185,10 +182,10 @@ PROJECTS = [
         "summary": "Manuel complet des 75 procédures d'infiltrations, arthrographies et biopsies ostéo-articulaires radioguidées.",
         "aiOpportunities": [
             {
-                "title": "Mode « Préparation Plateau & Check-list Salle » par procédure",
+                "title": "Extraction structurée des paramètres salle (Aiguille, Cible, Produit, Incidence) en bandeau haut",
                 "impact": "Quick Win",
-                "detail": "Afficher en haut de chacune des 75 fiches un bandeau ultra-lisible pour le manip/interne : aiguille exacte (G/longueur), produit de contraste, corticoïde (Hydrocortancyl / Diprostène / Altim), position patient et rayon directeur.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/guide-infiltration, ajoute en haut de chaque procédure un encart résumé « Plateau & Paramètres Clés » (Aiguille, Produit, Position, Cible) extrait de guide-data.json pour une lecture en 3 secondes en salle."
+                "detail": "Synthétiser en haut de chacune des 75 fiches les 4 constantes opératoires extraites du texte pour une lecture en 2 secondes en salle de radiologie.",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/guide-infiltration, ajoute en haut de chaque procédure un encart résumé « Plateau & Paramètres Clés » (Aiguille, Produit, Position, Cible) extrait de guide-data.json."
             }
         ]
     },
@@ -204,10 +201,29 @@ PROJECTS = [
         "summary": "Cerveau numérique médical et interventionnel (Prise de poste, Fiches RI, CR-Types IRM/TDM, RCP Sarcomes, Biblio).",
         "aiOpportunities": [
             {
-                "title": "Script d'audit du graphe Obsidian & Liaison automatique avec BiblioOstéo et l'Agenda RI",
-                "impact": "Quick Win",
-                "detail": "Détecter les notes orphelines, vérifier l'anonymisation RGPD (absence totale de dates de naissance / NIP) et injecter automatiquement les références PMID de BiblioOstéo dans les fiches RI correspondantes.",
-                "prompt": "Crée un script Python dans /Users/thomaslefevre/2nd brain qui vérifie l'anonymisation RGPD de toutes les notes Markdown, liste les [[Wikilinks]] manquants et relie chaque fiche de '02 - Radiologie Interventionnelle (RI)' aux articles correspondants de /Users/thomaslefevre/.t3/projects/biblioosteo/data/articles.json."
+                "title": "Mémoire Associative par Personalized PageRank sur tes [[Wikilinks]] (méthode HippoRAG 2)",
+                "impact": "Haute Valeur",
+                "detail": "Appliquer l'algorithme de marche aléatoire biaisée (Personalized PageRank de HippoRAG 2, NeurIPS/2025) directement sur le graphe de tes notes Obsidian + articles BiblioOstéo pour retrouver en 1 requête multi-sauts toutes les notes liées à un cas de RCP complexe.",
+                "prompt": "Crée un script Python hipporag_obsidian.py dans /Users/thomaslefevre/2nd brain qui construit le graphe d'adjacence de toutes mes notes Markdown ([[Wikilinks]], tags YAML) et des articles de /Users/thomaslefevre/.t3/projects/biblioosteo/data/articles.json, puis exécute un Personalized PageRank pour trouver les notes et références cliniques les plus connectées à une requête médicale."
+            }
+        ]
+    },
+    {
+        "id": "dicomviewer-radio-thomas",
+        "title": "TPack PACS (DICOM Viewer) & QUIZ Cochin MSK (radio-thomas)",
+        "category": "Radiologie & Hôpital Cochin",
+        "emoji": "🖥️",
+        "path": "/Users/thomaslefevre/Documents/dicomviewer",
+        "prodUrl": "https://mrthomaslef.github.io/dicomviewer/",
+        "githubUrl": "https://github.com/Mrthomaslef/dicomviewer",
+        "stack": "TypeScript • React • Vite • DICOM / .tpack • Vercel & Supabase (`radio-thomas`)",
+        "summary": "Console PACS pédagogique en ligne et banque de cas cliniques d'imagerie musculosquelettique.",
+        "aiOpportunities": [
+            {
+                "title": "Propagation 3D de ROI / Segmentation inter-coupes (méthode MedSAM 2 Memory Attention)",
+                "impact": "Haute Valeur",
+                "detail": "Lorsqu'on prépare un cas clinique `.tpack` sur un volume scanner ou IRM, pointer une lésion osseuse ou des parties molles sur 1 seule coupe centrale et propager automatiquement le masque ou la boîte englobante sur les coupes adjacentes.",
+                "prompt": "Dans /Users/thomaslefevre/Documents/dicomviewer, ajoute un outil d'annotation rapide permettant de pointer une lésion sur une coupe clé, de propager/interpoler le contour sur les coupes adjacentes du volume et d'exporter une coupe annotée vers QUIZ Imagerie."
             }
         ]
     },
@@ -223,9 +239,9 @@ PROJECTS = [
         "summary": "Synchronisation temps réel du planning de Radiologie Interventionnelle Cochin, vacations, consultations et biopsies.",
         "aiOpportunities": [
             {
-                "title": "Briefing automatique de la vacation RI du lendemain (Croisement Planning + Fiches 2nd Brain + Biblio)",
+                "title": "Serveur MCP Context-Aware (CA-MCP) exposant Planning RI + Biblio + Second Brain",
                 "impact": "Haute Valeur",
-                "detail": "Générer en 1 commande un résumé de préparation pour ta vacation du lendemain : liste des actes prévus (ex. cryoablation desmoïde, biopsie sacrée, cimentoplastie) avec rappel automatique de tes fiches techniques du Second Brain.",
+                "detail": "Implémenter la spécification Model Context Protocol (JSON-RPC 2.0 + Shared Context) pour que tes agents interrogent directement `sync_sheet.py` et croisent les gestes programmés avec tes fiches techniques RI.",
                 "prompt": "Crée un script briefing_ri.py dans /Users/thomaslefevre/Documents/Agendainterventionnel qui lit les actes à venir via sync_sheet.py et génère un briefing Markdown croisé avec les fiches techniques de /Users/thomaslefevre/2nd brain/02 - Radiologie Interventionnelle (RI)."
             }
         ]
@@ -242,16 +258,10 @@ PROJECTS = [
         "summary": "Suivi local unifié du patrimoine sur 3 piliers : Crédit Mutuel, MetaMask & Ledger (6 chaînes EVM) et scellés/cartes Pokémon.",
         "aiOpportunities": [
             {
-                "title": "Catégorisation intelligente locale des lignes CSV/DSP2 Crédit Mutuel & Détection d'anomalies",
+                "title": "Text-to-SQL sécurisé par grammaire SQLite en lecture seule & Snapshots temporels",
                 "impact": "Quick Win",
-                "detail": "Classer automatiquement chaque dépense/revenu bancaire (santé, garde d'enfant Pajemploi, abonnements IA, épargne, loisirs) dans SQLite avec graphique d'évolution du taux d'épargne mensuel.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/finance, ajoute un moteur de catégorisation automatique des transactions Crédit Mutuel (src/lib/credit-mutuel.ts) avec règles personnalisables persistées dans SQLite et vue analytique mensuelle Cashflow / Épargne."
-            },
-            {
-                "title": "Snapshots historiques automatiques & Courbe de valeur nette consolidée (EUR)",
-                "impact": "Quick Win",
-                "detail": "Enregistrer dans `data/finance.db` un point quotidien de la valeur des 3 piliers (Banque + Crypto + Pokémon) pour tracer la performance réelle et les plus-values latentes.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/finance, ajoute une table SQLite `net_worth_snapshots` qui enregistre automatiquement l'historique quotidien des 3 piliers (Crédit Mutuel, Wallets EVM, Collectr Pokémon) et affiche une courbe interactive d'évolution."
+                "detail": "Interroger ta base `data/finance.db` en langage naturel ou via des vues analytiques SQLite déterministes (taux d'épargne mensuel, exposition Cold vs Hot Wallet, plus-values Collectr) sans qu'aucune donnée bancaire ne sorte de ton Mac.",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/finance, ajoute une table SQLite `net_worth_snapshots` qui enregistre automatiquement l'historique quotidien des 3 piliers (Crédit Mutuel, Wallets EVM, Collectr Pokémon) ainsi qu'un moteur de catégorisation automatique des transactions Crédit Mutuel."
             }
         ]
     },
@@ -267,47 +277,28 @@ PROJECTS = [
         "summary": "App Store mobile unifié regroupant toutes tes webapps + dashboard temps réel des quotas et coûts API Gemini 4 Argon & Claude.",
         "aiOpportunities": [
             {
-                "title": "Intégration directe de News AI dans le Tapp Store + Recommandation de modèle selon ton quota live",
+                "title": "Monitoring du Context Caching Efficiency & Prévention du Context Rot",
                 "impact": "Quick Win",
-                "detail": "Ajouter News AI dans `projects.json` du Tapp Store et afficher dans Agent Tracking quel modèle utiliser maintenant selon le pourcentage restant avant le reset de 5h.",
-                "prompt": "Dans /Users/thomaslefevre/.t3/projects/allinone/projects.json, ajoute l'application News AI et enrichis gemini-ultra/index.html avec un indicateur de rythme de consommation (Burn Rate) avant la prochaine heure de reset."
-            }
-        ]
-    },
-    {
-        "id": "dicomviewer-radio-thomas",
-        "title": "TPack PACS (DICOM Viewer) & QUIZ Cochin MSK (radio-thomas)",
-        "category": "Radiologie & Hôpital Cochin",
-        "emoji": "🖥️",
-        "path": "/Users/thomaslefevre/Documents/dicomviewer",
-        "prodUrl": "https://mrthomaslef.github.io/dicomviewer/",
-        "githubUrl": "https://github.com/Mrthomaslef/dicomviewer",
-        "stack": "TypeScript • React • Vite • DICOM / .tpack • Vercel & Supabase (`radio-thomas`)",
-        "summary": "Console PACS pédagogique en ligne et banque de cas cliniques d'imagerie musculosquelettique.",
-        "aiOpportunities": [
-            {
-                "title": "Export 1-Clic d'une coupe clé du DICOM Viewer vers QUIZ Imagerie (1 Image 1 Diag)",
-                "impact": "Haute Valeur",
-                "detail": "Depuis TPack PACS, capturer la coupe courante avec son fenêtrage optimal, anonymiser les métadonnées et générer directement l'entrée JSON pour `quiz-image-3`.",
-                "prompt": "Dans /Users/thomaslefevre/Documents/dicomviewer, ajoute un bouton « Exporter vers Quiz Imagerie » qui capture le canvas de la coupe active avec son fenêtrage actuel et génère la fiche JSON compatible avec /Users/thomaslefevre/.t3/projects/quiz-image-3."
+                "detail": "Suivre en direct dans `gemini-ultra` le ratio Cache Hit (actuellement 92,8 % sur ton compte) et alerter quand une session dépasse le seuil où l'attention se dilue (Context Rot).",
+                "prompt": "Dans /Users/thomaslefevre/.t3/projects/allinone/projects.json, ajoute l'application News AI (https://mrthomaslef.github.io/news-ai/) et enrichis gemini-ultra/index.html avec un indicateur d'efficacité du cache KV et de Burn Rate avant le reset."
             }
         ]
     },
     {
         "id": "family-daily-apps",
-        "title": "Écosystème Famille & Quotidien (Agenda Famille, AssMat, Photo, Voyages, Forestia)",
+        "title": "Écosystème Famille & Hardware (Agenda Famille, AssMat, Photo, Xiaozhi ESP32)",
         "category": "Finance & Quotidien",
         "emoji": "🏡",
         "path": "/Users/thomaslefevre/Documents/agenda-famille",
         "prodUrl": "https://mrthomaslef.github.io/agenda-famille/",
         "githubUrl": "https://github.com/Mrthomaslef/agenda-famille",
-        "stack": "PWA • Python Sync (`sync_family_agenda.py`, `process_takeout.py`) • Swift/DOSBox (`forestia-mobile`)",
-        "summary": "Outils familiaux sur-mesure : planning partagé Marie & Thomas + gardes Cochin + Mabrouka, paie AssMat Pajemploi, tri Google Photos APFS et voyages.",
+        "stack": "PWA • Python Sync (`sync_family_agenda.py`, `process_takeout.py`) • ESP32-S3 AMOLED (`xiaozhi`)",
+        "summary": "Outils familiaux : planning partagé Marie & Thomas + gardes Cochin + Mabrouka, paie AssMat Pajemploi, tri Google Photos APFS et compagnon vocal ESP32.",
         "aiOpportunities": [
             {
-                "title": "Synchronisation croisée Gardes Cochin → Agenda Famille → Calcul automatique des heures AssMat",
+                "title": "Serveur MCP WebSocket local pour ton boîtier `xiaozhi-esp32-amoled-1.8`",
                 "impact": "Haute Valeur",
-                "detail": "Relier automatiquement les gardes/vacations de `cochin_gardes.json` et `agenda-famille` au calculateur mensuel `Assistantematernelle` pour pré-remplir les jours de présence de Mabrouka.",
+                "detail": "Connecter le protocole MCP de ton ESP32-S3 AMOLED directement à `family_data.json` et `cochin_gardes.json` sur ton réseau local.",
                 "prompt": "Crée un pont entre /Users/thomaslefevre/Documents/agenda-famille/family_data.json et /Users/thomaslefevre/Assistantematernelle pour pré-remplir automatiquement les horaires et jours de garde du mois dans le calculateur Pajemploi."
             }
         ]
@@ -316,333 +307,325 @@ PROJECTS = [
 
 NEWS_ITEMS = [
     {
-        "id": "council-multi-model-consensus",
-        "category_id": "agents_harness",
-        "date": "2026-11-04",
-        "date_fr": "Novembre 2026",
-        "maturity": "🔥 Impact Immédiat",
-        "setup_time": "Déjà installé (Skill Council)",
-        "cost_badge": "Inclus • Google AI Ultra + Claude Pro",
-        "source": "T3 Code • Orchestration Multi-Modèles",
-        "source_url": "https://t3.codes",
-        "title_fr": "Orchestration « Council » & Subagents isolés en Worktree : faire débattre Gemini 4 Argon et Claude Opus sur ton code",
-        "summary_fr": "Plutôt que d'utiliser un seul modèle en séquence, les harnais d'agents modernes (comme T3 Code avec `delegate_task` et le skill `council`) permettent de lancer en parallèle plusieurs modèles d'architectures différentes (ex. Gemini 4 Argon + Claude Opus/Sonnet) avec des rôles d'avocat du diable, de vérificateur clinique ou d'architecte UI, puis de synthétiser un consensus sans angle mort.",
-        "technical_breakthrough_fr": "L'isolation par `worktree` Git permet à un sous-agent de prototyper ou refactorer une fonctionnalité lourde en arrière-plan pendant que l'agent principal continue de travailler. Le pattern « Council » (analyse indépendante → confrontation croisée → synthèse arbitrée) réduit de plus de 60 % les régressions subtiles sur les gros fichiers `index.html` monolithiques et les pipelines de données.",
+        "id": "deepseek-r1-grpo-verifiable-rewards",
+        "category_id": "rl_reasoning_methods",
+        "date": "2026-01-22",
+        "date_fr": "Nature 2025 / Rév. 2026 • arXiv:2501.12948",
+        "paper_ref": "DeepSeek-AI et al. • Nature Vol. 645 (arXiv:2501.12948) + DAPO / Dr. GRPO",
+        "maturity": "🔬 Rupture Algorithmique Majeure",
+        "setup_time": "Applicable immédiatement",
+        "cost_badge": "-50 % VRAM (Suppression du Critic)",
+        "source": "DeepSeek-R1, GRPO & RLVR (Verifiable Rewards)",
+        "source_url": "https://arxiv.org/abs/2501.12948",
+        "title_fr": "GRPO (Group Relative Policy Optimization) & RLVR : comment l'apprentissage par renforcement à récompenses vérifiables a remplacé le SFT classique",
+        "summary_fr": "La publication de DeepSeek-R1 dans Nature (et ses extensions 2025–2026 Dr. GRPO et DAPO) a prouvé un résultat fondamental : des capacités complexes de raisonnement clinique et mathématique (auto-vérification, retour en arrière, critique d'hypothèse) émergent spontanément par pur Reinforcement Learning (RLVR — RL with Verifiable Rewards) sans avoir besoin de millions d'exemples de raisonnement annotés à la main (SFT).",
+        "technical_breakthrough_fr": "Comment fonctionne la méthode GRPO ? Dans l'algorithme PPO classique (utilisé depuis InstructGPT), il faut maintenir en mémoire un second réseau géant (« Critic / Value Network ») de même taille que le LLM pour estimer la baseline de récompense. GRPO supprime totalement le réseau Critic : pour une question $q$, le modèle génère un groupe de $G$ réponses $\{o_1, \dots, o_G\}$, évalue chacune avec une fonction de récompense déterministe vérifiable $r_i$ (ex. exactitude du diagnostic, conformité JSON, compilation du code), puis calcule l'avantage relatif normalisé intra-groupe : $A_i = (r_i - \text{mean}(r)) / \text{std}(r)$. Résultat : division par 2 de l'empreinte mémoire d'entraînement et alignement direct sur la vérité terrain.",
         "key_points_fr": [
-            "Exécution parallèle asynchrone via `delegate_task` sans bloquer ta session principale.",
-            "Confrontation d'architectures complémentaires : Gemini 4 Argon excelle sur le contexte géant (lecture simultanée de plusieurs dépôts et gros JSON) tandis que Claude brille sur la chirurgie fine et la critique éditoriale.",
-            "Particulièrement puissant pour vérifier la rigueur médicale de tes fiches RI (`2nd brain`, `BiblioOstéo`) ou auditer la sécurité d'un script financier (`PatrimoineOS`)."
+            "Élimination du réseau Critic : GRPO estime la baseline directement par la moyenne du groupe d'échantillons tirés pour un même prompt.",
+            "RLVR (Reinforcement Learning with Verifiable Rewards) : dès qu'une tâche possède un vérificateur déterministe (un compilateur, un validateur JSON Schema, ou une grille diagnostique radiologique), le modèle peut s'auto-améliorer ou sélectionner la meilleure trajectoire par vote/vérification à l'inférence (Best-of-N avec vérificateur).",
+            "Les variantes récentes (Dr. GRPO, DAPO) corrigent le biais de longueur en supprimant la division par la longueur de séquence dans la perte, évitant que les modèles ne deviennent inutilement verbeux."
         ],
-        "target_projects": ["cochin-os", "biblioosteo", "patrimoine-os", "second-brain"],
-        "workflow_how_to_fr": "Tu possèdes déjà le skill `council` installé dans T3 Code ! Dès que tu prends une décision d'architecture importante, que tu veux auditer une fiche de Radiologie Interventionnelle complexe (anticoagulants, fenêtres thérapeutiques) ou refondre une interface, tape simplement le mot-clé `council` dans ton prompt T3 Code.",
+        "target_projects": ["quiz-imagerie", "biblioosteo", "tapp-store-allinone"],
+        "workflow_how_to_fr": "Tu peux exploiter directement le principe RLVR (« Verifiable Rewards » + échantillonnage de groupe) dans deux de tes projets : 1) Dans `QUIZ Imagerie (quiz-image-3)`, remplacer le score binaire par une fonction de récompense vérifiable à 3 composantes (Signe sémiologique élémentaire + Topographie anatomique + Diagnostic exact), et 2) Dans tes scripts Python de génération (`BiblioOstéo`, `BiblioMarie`), utiliser une boucle de vérification déterministe qui teste la sortie et rejette/corrige automatiquement toute fiche qui viole tes contraintes.",
         "implementation_steps_fr": [
-            "Pour un audit de code ou d'interface : demande un `council` entre Gemini 4 Argon et Claude sur le projet cible.",
-            "Pour développer 2 fonctionnalités indépendantes en même temps : demande à l'agent d'utiliser un sous-agent en `worktree` sur la tâche secondaire.",
-            "Consulte ton dashboard `Agent Tracking (gemini-ultra)` pour vérifier tes quotas avant de lancer un Council multi-tours."
+            "Définir une fonction de score déterministe multi-critères (Verifiable Reward) dans `quiz-image-3` qui évalue séparément la lésion élémentaire, l'os/articulation et le diagnostic final.",
+            "Ajouter dans les scripts `build_*.py` de `BiblioOstéo` et `BiblioMarie` un vérificateur de récompense automatique (présence des chiffres statistiques clés, conformité PMID/DOI, longueur des résumés)."
         ],
-        "t3_prompt": "Lance un council pour auditer mes applications médicales COCHIN·OS (/Users/thomaslefevre/.t3/projects/guide-interne-cochin-os) et BiblioOstéo (/Users/thomaslefevre/.t3/projects/biblioosteo) : 1) ergonomie mobile en salle de radiologie, 2) cohérence des données hors-ligne, 3) les 3 améliorations les plus rapides à implanter aujourd'hui."
+        "t3_prompt": "Dans /Users/thomaslefevre/.t3/projects/quiz-image-3, implante un moteur d'évaluation graduée inspiré du paradigme Verifiable Rewards (RLVR) : décompose chaque cas du quiz en 3 récompenses vérifiables (1. Signe sémiologique / lésion élémentaire, 2. Localisation anatomique, 3. Diagnostic final) pour donner un retour pédagogique précis à l'interne lorsqu'il identifie la bonne sémiologie avant même d'avoir l'éponyme exact."
     },
     {
-        "id": "context-caching-2m-monorepo",
-        "category_id": "agents_harness",
-        "date": "2026-11-04",
-        "date_fr": "Novembre 2026",
-        "maturity": "🔥 Impact Immédiat",
-        "setup_time": "10 min",
-        "cost_badge": "Économie ~90 % Tokens (Cache $0.20/M)",
-        "source": "Google DeepMind • Gemini 4 Argon & Context Caching",
-        "source_url": "https://ai.google.dev/gemini-api/docs/caching",
-        "title_fr": "Context Caching implicite & fichiers d'ancrage (`AGENTS.md`) : comment tu économises déjà 80 % de ton quota Google AI Ultra",
-        "summary_fr": "Les statistiques de ton daemon `gemini-ultra` montrent que sur 2,52 milliards de tokens traités sur ton compte, 2,34 milliards (92,8 %) proviennent du cache de contexte (soit 4 805 € de valeur API brute pour seulement 928 € de coût théorique caché). Structurer chaque projet avec un fichier `AGENTS.md` concis en racine maximise le taux de hit du cache préfixe et évite à l'agent de ré-explorer l'arborescence à chaque nouveau thread.",
-        "technical_breakthrough_fr": "Le cache de préfixe KV (Key-Value) des modèles frontières conserve en mémoire vive les représentations d'attention des premiers blocs du prompt (instructions système, structure du dépôt, schémas de données). Si l'agent connaît immédiatement l'architecture exacte grâce à un `AGENTS.md` de 80 lignes, il passe de 15 appels d'exploration (`ls`, `grep`, `cat`) à 1 seul appel d'édition directe.",
-        "key_points_fr": [
-            "Sur ton compte Google AI Ultra, ton ratio Cache / Total atteint déjà 92,8 % grâce aux sessions longues T3 Code.",
-            "Seuls `2nd brain` et `radio-thomas` possèdent actuellement un fichier `AGENTS.md` / `CLAUDE.md` : les 16 autres projets de `.t3/projects/` n'en ont pas encore.",
-            "Ajouter un `AGENTS.md` standardisé dans tes projets phares (`biblioosteo`, `guide-interne-cochin-os`, `finance`, `allinone`) divise par 3 le temps du premier tour de chaque nouveau thread."
-        ],
-        "target_projects": ["tapp-store-allinone", "biblioosteo", "cochin-os", "patrimoine-os"],
-        "workflow_how_to_fr": "Générer automatiquement un fichier `AGENTS.md` ultra-compact dans chacun de tes dépôts actifs décrivant : 1) l'architecture exacte (ex. PWA `index.html` + `data/embedded_data.js`), 2) les commandes de build/déploiement GitHub Pages, et 3) tes règles obligatoires (français médical, Pull-to-Refresh, scroll horizontal trackpad).",
-        "implementation_steps_fr": [
-            "Définir les 4 règles globales dans chaque `AGENTS.md` : Pull-to-Refresh obligatoire, mise à jour de `embedded_data.js` après toute modif JSON, respect du mode sombre chaud, et zéro dépendance inutile.",
-            "Inclure la carte des chemins reliés (ex. lien entre `BiblioOstéo`, `2nd brain` et `Agendainterventionnel`)."
-        ],
-        "t3_prompt": "Parcours mes projets principaux dans /Users/thomaslefevre/.t3/projects/ (biblioosteo, biblio-marie, guide-interne-cochin-os, guide-infiltration, archive-des-internes, finance, allinone, quiz-image-3) et crée ou mets à jour dans chacun un fichier AGENTS.md concis documentant son architecture exacte, ses scripts de build/synchro et mes standards UI (Pull-to-Refresh, mode sombre, français soigné)."
-    },
-    {
-        "id": "structured-outputs-pubmed-zotero-pipeline",
-        "category_id": "rag_biblio_brain",
-        "date": "2026-11-03",
-        "date_fr": "Novembre 2026",
-        "maturity": "⚡ Quick Win (< 20 min)",
-        "setup_time": "15 min",
-        "cost_badge": "100 % Gratuit (PubMed API + T3 Code)",
-        "source": "NCBI E-Utilities + Structured JSON Schema",
-        "source_url": "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
-        "title_fr": "Veille Bibliographique Zéro-Friction : du PMID ou PDF brut à la fiche complète `BiblioOstéo` / `BiblioMarie` + Zotero + Obsidian en 1 commande",
-        "summary_fr": "Aujourd'hui, ajouter un nouvel article dans `BiblioOstéo` ou `BiblioMarie` demande de récupérer les métadonnées PubMed, de rédiger la synthèse structurée en français, d'extraire les paramètres pratiques et de regénérer `embedded_data.js` et les exports `.ris`/`.bib`. En couplant l'API NCBI `efetch` avec une validation JSON Schema stricte, tu peux passer un simple numéro PMID (ou glisser un PDF dans `pdfs/`) et obtenir instantanément la fiche complète prête à déployer.",
-        "technical_breakthrough_fr": "Les sorties structurées garanties par grammaire contrainte (Constrained Decoding / JSON Schema) éliminent 100 % des erreurs de syntaxe dans `articles.json` et `editorial.json`. De plus, un même pipeline peut alimenter simultanément ton site web PWA, ta collection Zotero et créer une fiche reliée par `[[Wikilinks]]` dans `/Users/thomaslefevre/2nd brain/05 - Biblio, Zotero & Enseignement`.",
-        "key_points_fr": [
-            "Extraction automatique du titre, auteurs, revue, DOI, abstract anglais et Date via `eutils.ncbi.nlm.nih.gov`.",
-            "Génération simultanée du résumé clinique français, des `key_points_fr`, de l'encadré `En pratique` / `Agenda Cochin` et des tags.",
-            "Reconstruction automatique de `data/embedded_data.js` et des fichiers `.ris` / `.bib` sans aucune intervention manuelle."
-        ],
-        "target_projects": ["biblioosteo", "biblio-marie", "second-brain"],
-        "workflow_how_to_fr": "Standardiser une commande unique dans `BiblioOstéo` et `BiblioMarie` : tu donnes simplement à T3 Code un PMID, un DOI ou un sujet (ex. *« Ajoute les 3 derniers articles sur la cryoneurolyse du névrome de Morton »*), et le pipeline met à jour la PWA, Zotero et ton Second Brain.",
-        "implementation_steps_fr": [
-            "Unifier le script `add_article.py` de `BiblioOstéo` et `build.py` de `BiblioMarie` avec un validateur de schéma JSON.",
-            "Ajouter un pont optionnel `--obsidian` qui génère la fiche Markdown correspondante dans `/Users/thomaslefevre/2nd brain/05 - Biblio, Zotero & Enseignement/` avec les bons tags et `[[Wikilinks]]`."
-        ],
-        "t3_prompt": "Améliore le pipeline d'ajout d'articles de /Users/thomaslefevre/.t3/projects/biblioosteo et /Users/thomaslefevre/.t3/projects/biblio-marie : crée un script unifié qui, à partir d'un ou plusieurs PMIDs, récupère l'abstract complet sur PubMed, valide la fiche JSON française, régénère automatiquement data/embedded_data.js + exports RIS, et crée dans /Users/thomaslefevre/2nd brain/05 - Biblio, Zotero & Enseignement une note Obsidian reliée par [[Wikilinks]]."
-    },
-    {
-        "id": "vlm-pdf-slides-to-quiz-and-index",
-        "category_id": "medical_vision",
-        "date": "2026-11-03",
-        "date_fr": "Novembre 2026",
-        "maturity": "🔥 Impact Immédiat",
+        "id": "colpali-late-interaction-visual-rag",
+        "category_id": "multimodal_rag_graphs",
+        "date": "2025-05-01",
+        "date_fr": "ICLR 2025 / 2026 • arXiv:2407.01449",
+        "paper_ref": "Faysse et al. (Illuin / CentraleSupélec) • ICLR 2025 (arXiv:2407.01449)",
+        "maturity": "🔥 Nouvelle Méthode Standard en RAG PDF",
         "setup_time": "25 min",
-        "cost_badge": "100 % Local / Navigateur (PDF.js + Canvas)",
-        "source": "Multimodal Vision & PDF.js Pipeline",
-        "source_url": "https://mozilla.github.io/pdf.js/",
-        "title_fr": "Pipeline Vision « De la Diapo de Staff au Quiz Interactif » : relier `Archives des Internes (07)` et `QUIZ Imagerie (04)`",
-        "summary_fr": "Dans `Archives des Internes`, les internes déposent leurs présentations PDF (Bone Club, Cas du mardi, Biblio du vendredi, Cours) qui sont rendues page par page avec PDF.js. Or, chaque présentation de « Cas du mardi » ou « Bone Club » contient exactement ce qu'il faut pour alimenter `QUIZ Imagerie — 1 Image 1 Diag` : une diapo d'imagerie clé et une diapo de diagnostic final !",
-        "technical_breakthrough_fr": "Grâce à l'extraction hybride (texte vectoriel PDF.js + rendu Canvas haute résolution d'une diapo sélectionnée ou extraction des objets images embarqués dans le PDF), tu peux transformer n'importe quelle diapo d'archive en un cas de quiz interactif en 1 clic, compressé en WebP/JPEG côté navigateur, sans jamais quitter l'application.",
+        "cost_badge": "Remplace les pipelines OCR complexes",
+        "source": "ColPali & ColQwen2 — Vision-Driven Document Retrieval",
+        "source_url": "https://arxiv.org/abs/2407.01449",
+        "title_fr": "ColPali & Late-Interaction Visuelle : pourquoi le RAG sur PDF abandonne l'OCR au profit de l'indexation de patchs d'images",
+        "summary_fr": "Dans un pipeline RAG classique sur PDF scientifiques ou médicaux, on extrait le texte brut (OCR / PDF.js), on tente de reconstruire les tableaux et on découpe en chunks. Ce pipeline casse systématiquement les arbres décisionnels, les courbes de survie, les tableaux d'Impact Factor et surtout les planches d'imagerie annotées de flèches. La méthode ColPali (ICLR 2025, suivie de ColQwen2) supprime totalement l'étape d'OCR en indexant directement l'image visuelle de chaque page.",
+        "technical_breakthrough_fr": "Comment fonctionne la méthode ? Au lieu de compresser toute une page PDF en un seul vecteur global (qui perd les détails fins), ColPali découpe la page rendue en une grille de patchs visuels (ex. $32 \times 32 = 1024$ patchs), les passe dans un Vision-Language Model (PaliGemma / Qwen2-VL) et projette chaque patch dans un espace d'embedding léger (dimension 128, quantifié en int8 ou binaire). Lors d'une recherche, l'opérateur **MaxSim (Late Interaction de ColBERT)** calcule pour chaque mot de ta requête le produit scalaire maximal avec tous les patchs de la page : $\text{Score}(q, d) = \sum_{i \in q} \max_{j \in d} (E_q^{(i)} \cdot E_d^{(j)})$. Un mot comme « vissage ilio-sacré » ou « courbe Kaplan-Meier » matche directement la zone visuelle exacte de la diapo !",
         "key_points_fr": [
-            "Valorise immédiatement les dizaines de cas cliniques présentés par les internes le mardi et le vendredi à Cochin.",
-            "Permet dans la visionneuse d'`Archives des Internes` un bouton « 🎯 Créer un Quiz depuis cette diapo » qui pré-remplit le diagnostic et l'image pour `QUIZ Imagerie`.",
-            "Anonyme par construction : possibilité de rogner (crop) en 1 geste le bandeau supérieur d'une image directement dans le navigateur avant export."
+            "Indexation 10x plus rapide et fidèle qu'un pipeline OCR + détection de mise en page.",
+            "L'opérateur MaxSim permet non seulement de retrouver la bonne page/diapo PDF, mais aussi de générer une carte de chaleur (heatmap) montrant quel patch précis de la diapo a répondu à la requête.",
+            "Avec la quantification binaire/int8 des vecteurs multi-patchs, l'index de 500 diapos de staff tient en quelques mégaoctets."
         ],
-        "target_projects": ["archive-des-internes", "quiz-imagerie", "cochin-os"],
-        "workflow_how_to_fr": "Ajouter dans la visionneuse de `Archives des Internes` un bouton d'export direct vers le format JSON du `#/studio` de `QUIZ Imagerie (quiz-image-3)` avec outil de recadrage d'anonymisation intégré.",
+        "target_projects": ["archive-des-internes", "guide-infiltration", "biblioosteo"],
+        "workflow_how_to_fr": "Tes projets `Archives des Internes` (présentations PDF de Bone Club, Cas du mardi, Cours) et `Guide Infiltrations` (213 planches anatomiques et radioguidées) sont les cas d'usage rêvés de cette méthode : beaucoup d'informations cruciales sont dans les schémas d'incidence, les flèches sur les coupes IRM et les tableaux récapitulatifs des diapos.",
         "implementation_steps_fr": [
-            "Dans la visionneuse PDF d'`archive-des-internes`, ajouter un bouton « 🎯 Envoyer cette diapo vers Quiz Imagerie ».",
-            "Permettre de sélectionner une zone rectangulaire sur la diapo (pour isoler l'IRM/TDM/Radio sans le texte autour ni aucun élément identifiant).",
-            "Copier ou exporter directement l'objet JSON prêt à coller dans `#/studio` de `quiz-image-3`."
+            "Dans `Archives des Internes`, associer à chaque diapo rendue par PDF.js des descripteurs visuels et structurels (présence d'imagerie, tableaux, région anatomique) en plus du texte OCR.",
+            "Permettre dans la recherche de sauter directement à la diapo contenant le schéma ou la coupe radiologique recherchée."
         ],
-        "t3_prompt": "Dans /Users/thomaslefevre/.t3/projects/archive-des-internes, ajoute dans la visionneuse de diapos PDF un outil « 🎯 Extraire vers Quiz Imagerie » permettant de recadrer une image radiologique présente sur la diapo courante, de récupérer automatiquement le diagnostic du dossier et de copier/télécharger le cas au format JSON compatible avec le Studio (#/studio) de /Users/thomaslefevre/.t3/projects/quiz-image-3."
+        "t3_prompt": "Dans /Users/thomaslefevre/.t3/projects/archive-des-internes et /Users/thomaslefevre/.t3/projects/guide-infiltration, améliore l'indexation et la recherche par page/diapo : combine le texte extrait avec des métadonnées visuelles par planche/diapo et affiche les miniatures des diapos correspondantes avec mise en évidence directe de la planche trouvée."
     },
     {
-        "id": "webgpu-local-embeddings-semantic-search",
-        "category_id": "local_first_webgpu",
-        "date": "2026-11-02",
-        "date_fr": "Novembre 2026",
-        "maturity": "⚡ Quick Win (< 30 min)",
+        "id": "medsam2-medgemma-3d-medical-foundation",
+        "category_id": "medical_foundation_vlm",
+        "date": "2025-07-08",
+        "date_fr": "Avril–Juillet 2025 / 2026 • arXiv:2504.03600 & 2507.05201",
+        "paper_ref": "Ma et al. (MedSAM 2, arXiv:2504.03600) & Google Research (MedGemma, arXiv:2507.05201)",
+        "maturity": "🩻 État de l'Art Imagerie Médicale",
         "setup_time": "20 min",
-        "cost_badge": "0 € • Exécution 100 % statique (GitHub Pages)",
-        "source": "WebGPU / Recherche Hybride BM25 + Synonymes Médicaux",
-        "source_url": "https://huggingface.co/docs/transformers.js",
-        "title_fr": "Recherche Sémantique & Tolérance Médicale Hors-Ligne sur GitHub Pages (sans serveur backend)",
-        "summary_fr": "La quasi-totalité de tes applications (`BiblioOstéo`, `BiblioMarie`, `Guide Infiltrations`, `COCHIN·OS`) sont hébergées gratuitement en statique sur GitHub Pages. Or, une recherche par `includes()` classique échoue si l'utilisateur tape « algodystrophie » au lieu de « SDRC », « cotyle » au lieu de « acétabulum », « KOA » au lieu de « kyste osseux anévrismal », ou fait une faute de frappe en salle d'intervention.",
-        "technical_breakthrough_fr": "Deux approches complémentaires fonctionnent aujourd'hui 100 % en statique sur GitHub Pages : 1) Un moteur hybride **BM25 + Graphe de synonymes médicaux ostéo-articulaires + distance de Levenshtein** (0 Ko de modèle à télécharger, latence < 1 ms sur mobile), ou 2) Des **embeddings pré-calculés au build** dans `scripts/build_*.py` (vecteurs quantifiés int8 de 256 dimensions ne pesant que ~30 Ko pour 100 fiches) permettant une vraie recherche par sens clinique.",
+        "cost_badge": "Open-Weights (Apache 2.0 / Gemma License)",
+        "source": "MedSAM 2 (3D Memory Attention) & MedGemma (Multimodal RL)",
+        "source_url": "https://arxiv.org/abs/2504.03600",
+        "title_fr": "MedSAM 2 & MedGemma : mémoire d'attention streaming 3D sur volumes TDM/IRM et RL multimodal en radiologie",
+        "summary_fr": "Deux avancées majeures ont transformé les modèles fondations ouverts en imagerie médicale : 1) **MedSAM 2** (arXiv:2504.03600) traite un volume scanner ou IRM 3D (ou une boucle d'échographie) comme une séquence vidéo temporelle grâce à un module de *Streaming Memory Attention*, permettant de segmenter une lésion en 3D à partir d'un seul clic sur la coupe centrale (réduisant de 85 % le temps de détourage). 2) **MedGemma** (Google Research, arXiv:2507.05201, 4B et 27B) démontre que le post-training par **Reinforcement Learning multimodal** surpasse nettement le fine-tuning supervisé (SFT) pour le raisonnement sémiologique et la génération de comptes-rendus.",
+        "technical_breakthrough_fr": "Pourquoi est-ce une percée méthodologique ? En imagerie 3D classique (ex. U-Net 3D / nnU-Net), chaque pathologie nécessite un modèle spécifique lourd. MedSAM 2 (entraîné sur >455 000 paires de volumes TDM/IRM 3D et >76 000 frames d'échographie) maintient une banque mémoire FIFO des embeddings des coupes précédentes : la coupe $z$ assiste par *cross-attention* aux caractéristiques de la lésion sur les coupes $z-1, z-2, \dots$. De son côté, MedGemma 4B utilise un encodeur visuel SigLIP médicalisé couplé à un entraînement RL qui pénalise les hallucinations de latéralité et de modalité.",
         "key_points_fr": [
-            "Zéro serveur, zéro clé API exposée côté client, 100 % compatible avec le mode hors-ligne de l'hôpital (sous-sol Achard -1).",
-            "Tu as déjà implanté une validation souple par synonymes dans `QUIZ Imagerie (quiz-image-3)` : ce même moteur peut propulser la recherche de `BiblioOstéo`, `Guide Infiltrations` et `BiblioMarie`.",
-            "Permet de trouver une fiche du `Guide Infiltrations` en tapant un symptôme ou un repère anatomique synonyme (ex. « épine sciatique », « nerf pudendal », « Rhizarthrose » → « Trapézo-métacarpienne »)."
+            "Propagation 3D one-prompt : 1 boîte ou 1 point sur la coupe clé suffit à propager la région d'intérêt (ROI) sur tout l'empilement DICOM TDM/IRM.",
+            "Support natif de l'échographie interventionnelle (suivi temps réel d'une masse des parties molles ou d'un trajet d'aiguille image par image).",
+            "MedGemma 4B est suffisamment compact pour tourner localement sur la mémoire unifiée d'un Mac mini M4 (en 4-bit ou 8-bit MLX) pour pré-annoter des cas d'enseignement sans envoyer d'image sur Internet."
         ],
-        "target_projects": ["guide-infiltration", "biblioosteo", "biblio-marie", "cochin-os"],
-        "workflow_how_to_fr": "Intégrer un moteur de recherche floue + thésaurus médical français/anglais partagé dans `Guide Infiltrations` (75 procédures), `BiblioOstéo` et `BiblioMarie`.",
+        "target_projects": ["dicomviewer-radio-thomas", "quiz-imagerie", "second-brain"],
+        "workflow_how_to_fr": "Dans ta console pédagogique `TPack PACS (dicomviewer)` et dans le Studio de `QUIZ Imagerie`, tu peux implanter une propagation automatique de ROI 3D entre coupes adjacentes lors de la création de dossiers `.tpack`, et utiliser un modèle local (ou l'analyse d'histogramme localisée dans la ROI) pour calculer automatiquement le fenêtrage optimal centré sur la lésion.",
         "implementation_steps_fr": [
-            "Normaliser les accents, ligatures (`œ` → `oe`, `é` → `e`) et expandir automatiquement les abréviations médicales (`OO`, `KOA`, `KOE`, `ECT`, `RF`, `MCP`, `MTP`, `TFCC`, `SDRC`, `VRS`, `IOA`).",
-            "Classer les résultats par score de pertinence (titre > tags > indication > corps de texte) plutôt que par simple filtre booléen."
+            "Dans `dicomviewer`, ajouter un outil « 🎯 ROI Lésionnelle 3D » qui ajuste automatiquement le fenêtrage (Window Width / Window Level) sur les densités Hounsfield (TDM) ou intensités (IRM) de la boîte pointée.",
+            "Permettre d'exporter la coupe clé avec sa ROI commutable (affichée à la correction du quiz) vers `quiz-image-3`."
         ],
-        "t3_prompt": "Améliore le moteur de recherche de /Users/thomaslefevre/.t3/projects/guide-infiltration et /Users/thomaslefevre/.t3/projects/biblioosteo en ajoutant une normalisation sans accents, une tolérance aux fautes de frappe et un dictionnaire de synonymes ostéo-articulaires & RI (ex. rhizarthrose ↔ trapézo-métacarpienne, KOA ↔ kyste anévrismal, OO ↔ ostéome ostéoïde, cotyle ↔ hanche) fonctionnant 100 % hors-ligne."
+        "t3_prompt": "Dans /Users/thomaslefevre/Documents/dicomviewer et /Users/thomaslefevre/.t3/projects/quiz-image-3, ajoute un outil d'annotation de Région d'Intérêt (ROI) inspiré de MedSAM 2 : un clic-glissé sur la lésion calcule automatiquement le fenêtrage optimal centré sur la ROI, interpole la boîte sur les coupes adjacentes et permet d'afficher le contour de la lésion en correction dans QUIZ Imagerie."
     },
     {
-        "id": "ambient-voice-radiology-cr-types",
-        "category_id": "voice_automation_iot",
+        "id": "hipporag2-lightrag-personalized-pagerank",
+        "category_id": "multimodal_rag_graphs",
+        "date": "2025-02-20",
+        "date_fr": "NeurIPS 2024 & Févr. 2025 • arXiv:2502.14802 & 2410.05779",
+        "paper_ref": "Gutiérrez et al. (HippoRAG 2, arXiv:2502.14802) & Guo et al. (LightRAG, arXiv:2410.05779)",
+        "maturity": "⚡ Méthode Idéale pour Obsidian & Biblio",
+        "setup_time": "15 min",
+        "cost_badge": "0 € • Algorithme de Graphe Pur (PageRank)",
+        "source": "HippoRAG 2 (Associative Memory) & LightRAG",
+        "source_url": "https://arxiv.org/abs/2502.14802",
+        "title_fr": "HippoRAG 2 & LightRAG : la mémoire associative par Personalized PageRank remplace le Vector RAG classique",
+        "summary_fr": "Le RAG vectoriel standard (découper des notes en chunks et calculer une similarité cosinus) échoue sur les questions cliniques multi-sauts : par exemple, relier une note de RCP Sarcome, la fiche technique d'abord de biopsie du compartiment antérieur de cuisse, la gestion du Plavix et l'article de référence dans BiblioOstéo. **HippoRAG 2** (arXiv:2502.14802) s'inspire de la théorie de l'indexation hippocampique humaine pour combiner vecteurs et marche aléatoire sur graphe via l'algorithme **Personalized PageRank (PPR)**.",
+        "technical_breakthrough_fr": "Comment fonctionne la méthode ? Au lieu de ne chercher que les passages textuellement proches de la requête, HippoRAG 2 construit un graphe de connaissances léger (nœuds = entités cliniques, actes RI, molécules, notes, articles PMID ; arêtes = relations et liens `[[Wikilinks]]`). Lors d'une requête, les nœuds détectés dans la question reçoivent une probabilité initiale (seed vector $\vec{p}_0$), puis l'algorithme exécute une diffusion **Personalized PageRank** : $\vec{\pi} = (1 - \alpha) M \vec{\pi} + \alpha \vec{p}_0$. En 10 itérations matricielles (< 2 ms en Python/JS), la probabilité se propage à travers tes `[[Wikilinks]]` et tes tags pour faire remonter les fiches indirectement mais crucialement liées !",
+        "key_points_fr": [
+            "Gain de +20 à +30 % sur les benchmarks de raisonnement multi-sauts (MuSiQue, 2WikiMultihopQA) par rapport au RAG vectoriel ou BM25 seul.",
+            "Contrairement au GraphRAG de Microsoft (qui coûte très cher en tokens pour générer des résumés de communautés), LightRAG et HippoRAG 2 se mettent à jour de façon incrémentale en quelques millisecondes.",
+            "Ton `Second Brain` Obsidian (`/Users/thomaslefevre/2nd brain`) possède DÉJÀ une structure de graphe explicite (`[[Wikilinks]]`, propriétés YAML `domaine`, `tags`) : c'est un graphe HippoRAG naturel !"
+        ],
+        "target_projects": ["second-brain", "biblioosteo", "biblio-marie", "cochin-os"],
+        "workflow_how_to_fr": "Implémenter l'algorithme Personalized PageRank (PPR) directement sur le graphe unifié de ton `Second Brain` Obsidian + `BiblioOstéo` + `Guide Infiltrations`. Quand tu prépares une vacation RI ou un staff, l'algorithme active les nœuds de l'acte et diffuse le score vers les protocoles d'anesthésie, les CR-types et les articles PubMed connectés.",
+        "implementation_steps_fr": [
+            "Parser les fichiers Markdown de `/Users/thomaslefevre/2nd brain` (liens `[[...]]` et tags YAML) et les relier aux tags et catégories de `biblioosteo/data/articles.json`.",
+            "Implémenter la fonction `personalized_pagerank(adj_matrix, seed_nodes, alpha=0.15)` en Python standard (zéro dépendance lourde) pour classer contextuellement tes notes et ta biblio."
+        ],
+        "t3_prompt": "Crée dans /Users/thomaslefevre/2nd brain un moteur de recherche associatif basé sur la méthode HippoRAG 2 (Personalized PageRank, arXiv:2502.14802) : construis le graphe reliant toutes mes notes Obsidian ([[Wikilinks]], tags YAML), mes 75 fiches du Guide Infiltrations et mes articles BiblioOstéo, afin qu'une requête sur un geste RI fasse remonter par diffusion sur le graphe le protocole technique, le CR-type, les règles d'anticoagulants et les PMIDs associés."
+    },
+    {
+        "id": "xgrammar2-outlines-constrained-decoding-pda",
+        "category_id": "inference_grammar_edge",
+        "date": "2025-11-15",
+        "date_fr": "2025–2026 • arXiv:2411.15100 & JSONSchemaBench (2501.10868)",
+        "paper_ref": "Dong et al. (XGrammar / XGrammar-2, CMU / MLC) & Willard et al. (Outlines FSM)",
+        "maturity": "⚡ Latence Zéro (< 40 µs / token)",
+        "setup_time": "15 min",
+        "cost_badge": "100 % Fiabilité Schéma & Tool-Calling",
+        "source": "XGrammar-2 & Constrained Decoding via Pushdown Automata",
+        "source_url": "https://arxiv.org/abs/2411.15100",
+        "title_fr": "XGrammar-2 & Décodage Contraint par Automates à Pile (PDA) : comment garantir mathématiquement 0 % d'erreur de format JSON ou d'appel d'outil",
+        "summary_fr": "Demander à un LLM dans un prompt « Réponds uniquement en JSON valide » échoue régulièrement sur des schémas imbriqués ou lors d'extractions massives d'articles PubMed. Les méthodes **Outlines** (automates à états finis FSM) et **XGrammar / XGrammar-2** (arXiv:2411.15100, automates à pile au niveau de l'octet avec cache JIT) résolvent ce problème directement dans la boucle d'échantillonnage des logits : à chaque pas de génération, un masque binaire met à $-\infty$ la probabilité de tout token du vocabulaire qui violerait la grammaire JSON Schema ou le typage d'un outil.",
+        "technical_breakthrough_fr": "Quelle est l'astuce algorithmique d'XGrammar ? Un vocabulaire LLM contient ~128 000 tokens qui découpent arbitrairement les accolades et les chaînes UTF-8. Calculer la validité de 128 000 tokens à chaque pas sur une grammaire non contextuelle (CFG) prenait des dizaines de millisecondes. XGrammar sépare les tokens en deux ensembles : 1) les **tokens indépendants du contexte** (>99 % des cas), dont les masques binaires sont pré-calculés hors-ligne dans un cache compact, et 2) les rares **tokens dépendants du contexte** (fermetures d'imbrication), évalués à la volée par un automate à pile (Pushdown Automaton) avec compilateur JIT. XGrammar-2 ajoute `TagDispatch` pour basculer dynamiquement entre réflexion libre (`<think>`) et grammaire stricte dès qu'un tag d'outil apparaît.",
+        "key_points_fr": [
+            "Surcoût de décodage quasi nul (< 40 microsecondes par étape, soit un gain de vitesse jusqu'à 100x sur les moteurs de grammaire de première génération).",
+            "Garantie mathématique à 100 % que la sortie respecte les types, les énumérations (`enum` des catégories `BiblioOstéo` / `BiblioMarie`) et les champs obligatoires.",
+            "Supporté nativement dans les APIs Gemini (`response_schema`), Claude (Tool Use strict), ainsi qu'en local via `mlx-lm`, `vLLM` et `llama.cpp`."
+        ],
+        "target_projects": ["biblioosteo", "biblio-marie", "patrimoine-os", "quiz-imagerie"],
+        "workflow_how_to_fr": "Remplacer toutes les extractions de texte libre ou regex fragiles dans tes pipelines de données (`BiblioOstéo`, `BiblioMarie`, import CSV/Collectr de `PatrimoineOS`) par des schémas JSON contraints avec énumérations strictes (`category_id`, `design`, `audience`, `modality`).",
+        "implementation_steps_fr": [
+            "Définir un fichier `schema.json` formel pour `articles.json` (`BiblioOstéo`), `editorial.json` (`BiblioMarie`) et les cas cliniques de `quiz-image-3`.",
+            "Intégrer la validation stricte dans les scripts Python de build pour bloquer automatiquement toute entrée mal typée avant la génération de `embedded_data.js`."
+        ],
+        "t3_prompt": "Dans /Users/thomaslefevre/.t3/projects/biblioosteo et /Users/thomaslefevre/.t3/projects/biblio-marie, crée des schémas JSON formels (JSON Schema Draft 2020-12 avec enums stricts sur les catégories, modalités et types d'études) et intègre-les dans scripts/build_biblio_database.py et scripts/build.py pour garantir à 100 % l'intégrité des fiches et des exports Zotero."
+    },
+    {
+        "id": "kokoro-82m-styletts2-istftnet-webgpu",
+        "category_id": "inference_grammar_edge",
+        "date": "2025-02-10",
+        "date_fr": "2025–2026 • Apache 2.0 • Kokoro-82M & ONNX WebGPU",
+        "paper_ref": "hexgrad (Kokoro-82M) • Architecture StyleTTS 2 + Vocodeur ISTFTNet (Transformée de Fourier Inverse)",
+        "maturity": "⚡ 100 % Client-Side / 0 € Serveur",
+        "setup_time": "20 min",
+        "cost_badge": "Modèle 82M (~86 Mo quantifié q8)",
+        "source": "Kokoro-82M & Synthèse Vocale Neuronale WebGPU",
+        "source_url": "https://huggingface.co/hexgrad/Kokoro-82M",
+        "title_fr": "Kokoro-82M (StyleTTS 2 + ISTFTNet) sous WebGPU : comment un modèle de seulement 82M de paramètres rivalise avec les TTS géants directement dans le navigateur",
+        "summary_fr": "Pendant longtemps, obtenir une synthèse vocale (Text-to-Speech) naturelle en français ou en anglais exigeait soit une API cloud payante (ElevenLabs, OpenAI Audio), soit un modèle local de plus de 1 Go. **Kokoro-82M** (Apache 2.0) a prouvé qu'une architecture de 82 millions de paramètres seulement (~86 Mo en ONNX int8) surpasse dans les classements Elo des modèles 10 fois plus lourds, et s'exécute en temps réel dans une simple page web via **WebGPU / WASM** (`kokoro-js` / `Transformers.js`).",
+        "technical_breakthrough_fr": "Pourquoi Kokoro-82M est-il si léger et rapide ? Les TTS modernes classiques utilisent des étapes de diffusion itératives lourdes et un vocodeur temporel neuronal (comme HiFi-GAN) qui calcule point par point chaque échantillon audio à 24 kHz. Kokoro-82M combine une architecture **StyleTTS 2** allégée (sans encodeur de diffusion lourd à l'inférence) avec un vocodeur **ISTFTNet** : au lieu de générer l'onde sonore brute échantillon par échantillon par convolutions transposées coûteuses, le réseau prédit la magnitude et la phase dans le domaine fréquentiel, puis applique une simple **Transformée de Fourier Rapide Inverse (iSTFT)** mathématique ! Le coût de calcul chute drastiquement tout en préservant une prosodie ultra-naturelle.",
+        "key_points_fr": [
+            "Exécution 100 % dans le navigateur (iPhone, iPad, Mac) via ONNX Runtime Web (WebGPU fp16/fp32 ou WebAssembly SIMD) ou en local sur Mac mini M4 via `mlx-audio`.",
+            "Support multilingue incluant le français (`ff_siwis`) et l'anglais scientifique/médical.",
+            "Zéro serveur, zéro coût par caractère : compatible avec un hébergement statique GitHub Pages."
+        ],
+        "target_projects": ["biblio-marie", "biblioosteo", "second-brain"],
+        "workflow_how_to_fr": "Transformer `BiblioMarie` et `BiblioOstéo` en véritable **revue de presse audio (« Mode Podcast 2 min »)** : en un tap, écouter à la suite les synthèses françaises et les points « En pratique » des nouveaux articles de la semaine pendant les trajets.",
+        "implementation_steps_fr": [
+            "Ajouter un lecteur audio flottant (« 🎧 Écouter la sélection ») dans `BiblioMarie` et `BiblioOstéo`.",
+            "Utiliser une architecture hybride : voix neuronale haute qualité (pré-générée en opus/mp3 via Kokoro local lors du `build.py` ou synthétisée à la volée) avec fallback instantané hors-ligne."
+        ],
+        "t3_prompt": "Dans /Users/thomaslefevre/.t3/projects/biblio-marie et /Users/thomaslefevre/.t3/projects/biblioosteo, ajoute un mode « 🎧 Écouter l'article / Mode Podcast » avec barre de lecture flottante (Play/Pause, vitesse 1x/1.25x/1.5x, passage automatique à l'article suivant) permettant d'écouter la synthèse française et les implications pratiques en mains-libres."
+    },
+    {
+        "id": "eagle3-speculative-decoding-apple-silicon-mlx",
+        "category_id": "inference_grammar_edge",
+        "date": "2025-03-03",
+        "date_fr": "Mars 2025 / Études Apple Silicon 2026 • arXiv:2503.01840",
+        "paper_ref": "Li et al. (EAGLE-3, arXiv:2503.01840) & Apple Silicon MLX Inference Studies (2026)",
+        "maturity": "🔬 Optimisation Inférence & Mac M4",
+        "setup_time": "15 min",
+        "cost_badge": "Accélération 2.5x à 4x sans perte mathématique",
+        "source": "EAGLE-3 (Feature-Level Autoregression) & Apple Silicon MLX",
+        "source_url": "https://arxiv.org/abs/2503.01840",
+        "title_fr": "EAGLE-3 & Décodage Spéculatif sur Apple Silicon (Mac mini M4 / MLX) : accélérer la génération de 3x sans aucune perte de qualité",
+        "summary_fr": "Lorsqu'un LLM génère du texte ou du code token par token, le facteur limitant n'est pas la puissance de calcul brute du GPU, mais la **bande passante mémoire** (il faut relire tous les poids du modèle depuis la RAM à chaque token généré). Le décodage spéculatif et sa percée **EAGLE-3** (arXiv:2503.01840) permettent de proposer 4 à 6 tokens d'un coup via une tête légère et de les vérifier en **une seule passe parallèle** du grand modèle, garantissant mathématiquement exactement la même distribution de sortie que le modèle original.",
+        "technical_breakthrough_fr": "Quelle est la nouveauté de la méthode EAGLE-3 par rapport au décodage spéculatif classique ? 1) Au lieu d'utiliser un second petit modèle indépendant (« Draft Model »), EAGLE greffe une tête autorégressive ultra-légère directement sur les représentations internes (hidden states) du modèle cible. 2) Alors qu'EAGLE-1/2 ne lisait que la dernière couche cachée (contrainte par la prédiction du token immédiat), **EAGLE-3 fusionne les vecteurs de caractéristiques des couches basses, moyennes et hautes** du Transformer et entraîne la tête en mode *Training-Time Test* (simulation de plusieurs pas d'auto-alimentation pendant l'entraînement). Sur Apple Silicon (Mac mini M4 avec mémoire unifiée via `mlx-lm`), cela réduit massivement le goulot d'étranglement mémoire lors de la rédaction de longs comptes-rendus ou de patchs de code.",
+        "key_points_fr": [
+            "Accélération strictement **lossless** (sans perte) : l'algorithme de rejet spéculatif garantit que la sortie finale suit à 100 % la loi de probabilité du grand modèle.",
+            "Gain maximal sur le code, le JSON et les comptes-rendus médicaux structurés (où les séquences de tokens sont hautement prévisibles par la tête spéculative).",
+            "Sur ton Mac mini M4 (`M4 Gaming` / serveur local `192.168.1.111`), le framework `mlx-lm` d'Apple tire parti de la mémoire unifiée pour faire tourner modèle cible + brouillon spéculatif sans copie CPU↔GPU."
+        ],
+        "target_projects": ["tapp-store-allinone", "second-brain", "biblioosteo"],
+        "workflow_how_to_fr": "Pour toutes tes tâches d'automatisation locale sur ton Mac mini M4 (anonymisation RGPD de notes médicales, pré-classification de lignes bancaires `PatrimoineOS`, ou résumé rapide de mails/planning dans `Agendainterventionnel`), utiliser `mlx-lm` avec décodage spéculatif activé ou des prompts préfixés qui maximisent l'acceptation des tokens spéculatifs.",
+        "implementation_steps_fr": [
+            "Structurer les modèles de sortie (CR-types, JSON) avec des clés prévisibles dans un ordre fixe pour maximiser le taux d'acceptation spéculatif (Draft Acceptance Rate).",
+            "Optionnel : disposer d'un runner local `mlx` sur ton Mac mini M4 pour les traitements sensibles 100 % hors-cloud."
+        ],
+        "t3_prompt": "Analyse mes scripts d'automatisation locale dans /Users/thomaslefevre/Documents/Agendainterventionnel et /Users/thomaslefevre/2nd brain, et prépare un module Python optionnel utilisant l'inférence locale Apple Silicon (MLX / API locale) avec prompts structurés à préfixe fixe pour traiter hors-ligne les données médicales sensibles."
+    },
+    {
+        "id": "agentless-hierarchical-localization-vs-autonomous-swe",
+        "category_id": "agentic_protocols_swe",
+        "date": "2025-09-25",
+        "date_fr": "FSE / 2025–2026 • arXiv:2407.01489 & 2509.23045",
+        "paper_ref": "Xia et al. (Agentless, UIUC, arXiv:2407.01489) & Kimi-Dev (arXiv:2509.23045)",
+        "maturity": "🔥 Méthode d'Ingénierie Code Prouvée",
+        "setup_time": "Immédiat dans T3 Code",
+        "cost_badge": "Divise par 4 le coût et les boucles d'erreur",
+        "source": "Agentless & Localisation Hiérarchique sur SWE-bench",
+        "source_url": "https://arxiv.org/abs/2407.01489",
+        "title_fr": "Méthode « Agentless » (arXiv:2407.01489) : pourquoi la localisation hiérarchique en 3 étapes bat souvent les agents autonomes complexes sur SWE-bench",
+        "summary_fr": "Une découverte contre-intuitive mais majeure sur le benchmark de génie logiciel **SWE-bench** a été démontrée par l'article *Agentless* (UIUC) et confirmée par les travaux 2025–2026 (*Kimi-Dev*, arXiv:2509.23045) : laisser un agent autonome boucler librement pendant 40 tours avec des outils shell finit souvent par polluer sa fenêtre de contexte, introduire des régressions et exploser la consommation de tokens. À l'inverse, un pipeline déterministe en **3 phases strictes (1. Localisation hiérarchique → 2. Génération de patchs candidats → 3. Validation par test reproductible)** obtient un taux de résolution supérieur pour une fraction du coût.",
+        "technical_breakthrough_fr": "Comment fonctionne la localisation hiérarchique d'Agentless ? Au lieu de faire des `grep` aléatoires dans tout le dépôt, la méthode procède en entonnoir : **Étape 1a** : fournir uniquement l'arbre des fichiers du dépôt (et les résumés `AGENTS.md`) pour sélectionner les $k$ fichiers pertinents. **Étape 1b** : fournir uniquement le squelette (signatures des fonctions, classes, sélecteurs CSS/DOM) de ces $k$ fichiers pour identifier la fonction exacte. **Étape 1c** : ne lire que la plage de lignes `[StartLine, EndLine]` ciblée, générer un diff minimal (`Search/Replace`), et exécuter un vérificateur syntaxique (`node -e` / `python3 -m py_compile` / test unitaire).",
+        "key_points_fr": [
+            "Réduit de 70 % le nombre de tokens d'entrée consommés par tâche de maintenance ou d'ajout de fonctionnalité.",
+            "C'est particulièrement crucial sur tes applications qui reposent sur un gros fichier `index.html` autonome (`allinone` fait 93 Ko, `biblioosteo` fait 42 Ko, `guide-interne-cochin-os`) : lire tout le fichier à chaque tour gaspille le contexte.",
+            "En documentant la carte des fonctions et des sections de lignes dans un fichier `AGENTS.md` par projet, tu donnes directement l'Étape 1a et 1b gratuitement à ton agent T3 Code !"
+        ],
+        "target_projects": ["tapp-store-allinone", "cochin-os", "biblioosteo", "patrimoine-os"],
+        "workflow_how_to_fr": "Appliquer la méthode *Hierarchical Localization* d'Agentless à tes 18 dépôts en générant automatiquement dans chaque projet un index structurel léger (`AGENTS.md`) qui cartographie les fichiers, les fonctions clés et la commande de validation syntaxique en 1 ligne.",
+        "implementation_steps_fr": [
+            "Générer pour chaque dépôt un `AGENTS.md` contenant l'arbre des fichiers, le rôle de chaque script et les points d'entrée JS/Python.",
+            "Inclure dans chaque `AGENTS.md` la commande exacte de vérification rapide (ex. validation JS `new Function()` + vérification du build JSON) inspirée de la phase 3 d'Agentless."
+        ],
+        "t3_prompt": "Applique la méthode de localisation hiérarchique Agentless (arXiv:2407.01489) à mes projets dans /Users/thomaslefevre/.t3/projects/ (allinone, biblioosteo, biblio-marie, guide-interne-cochin-os, guide-infiltration, archive-des-internes, finance, quiz-image-3) : génère dans chacun un fichier AGENTS.md contenant le squelette des fichiers/fonctions clés et la commande de test/validation déterministe en 1 ligne."
+    },
+    {
+        "id": "context-rot-attention-dilution-long-context",
+        "category_id": "agentic_protocols_swe",
         "date": "2026-11-01",
-        "date_fr": "Novembre 2026",
-        "maturity": "🧪 Haute Valeur Clinique",
-        "setup_time": "30 min",
-        "cost_badge": "100 % Local & Anonyme",
-        "source": "Structured Clinical Reporting & CR-Types",
-        "source_url": "https://rsna.org/practice-tools/data-tools-and-standards/radreport-reporting-templates",
-        "title_fr": "Générateur de Comptes-Rendus Types (CR-Types RI & Imagerie Ostéo) interactif relié à ton `Second Brain`",
-        "summary_fr": "Le dossier `03 - Imagerie Diagnostique & CR-Types` et `02 - Radiologie Interventionnelle (RI)` de ton Second Brain Obsidian a vocation à centraliser tes comptes-rendus types (arthroscanner d'épaule, IRM de sarcome, CR opératoire de cryoablation de tumeur desmoïde, radiofréquence d'ostéome ostéoïde, biopsie osseuse sous scanner, infiltration foraminale).",
-        "technical_breakthrough_fr": "Au lieu de copier-coller des textes statiques et d'oublier de modifier un côté (droit/gauche) ou une taille d'aiguille, un **compositeur de CR-Types à variables dynamiques** (chips cliquables en 1 tap + dictée de quelques mots-clés : ex. *« Ostéome ostéoïde tibia droit, nidus 6 mm, sonde RF 17G active tip 7 mm, 6 min à 90°C, sans complication »*) génère instantanément le compte-rendu opératoire formaté selon les standards de Cochin Radio B, prêt à être collé dans le RIS.",
+        "date_fr": "2025–2026 • arXiv:2611.04169 & RULER / NoLiMa Benchmarks",
+        "paper_ref": "Études sur la dégradation de l'attention en contexte long (RULER, NoLiMa, arXiv:2611.04169)",
+        "maturity": "🔬 Méthode de Prompting & Context Engineering",
+        "setup_time": "Immédiat",
+        "cost_badge": "+35 % de précision sur tâches complexes",
+        "source": "Context Rot & Dilution d'Attention Softmax en Fenêtre Géante",
+        "source_url": "https://arxiv.org/abs/2611.04169",
+        "title_fr": "« Context Rot » & Compétition d'Attention : pourquoi une fenêtre de 1M–2M de tokens perd en précision dès 64k tokens si le contexte n'est pas élagué",
+        "summary_fr": "Bien que les modèles frontières supportent techniquement 200k à 2 millions de tokens, les benchmarks de raisonnement en contexte long (**RULER**, **NoLiMa** et l'étude récente *Length Is Cheap, Competition Is Not: Attention Predicts Context Rot in Retrieval*, arXiv:2611.04169) démontrent un phénomène critique appelé **Context Rot** : ce n'est pas la longueur brute qui dégrade le modèle, mais la **compétition sémantique dans le dénominateur du Softmax d'attention** lorsque des dizaines de versions de code similaires ou de logs d'outils s'accumulent dans l'historique.",
+        "technical_breakthrough_fr": "Quelle est l'explication mathématique ? Dans le mécanisme d'attention $\text{Attention}(Q, K, V) = \text{softmax}(QK^T / \sqrt{d_k})V$, la somme des poids vaut 1. Si ton historique de conversation contient 15 anciens blocs de code HTML/JSON presque identiques au fichier actuel (des « distracteurs à forte similarité cosinus »), la masse de probabilité du Softmax se divise entre les anciennes versions et la version actuelle (entropie d'attention élevée). Cela provoque des régressions où le modèle réintroduit un bug corrigé 10 tours plus tôt !",
         "key_points_fr": [
-            "Zéro donnée patient stockée (100 % conforme RGPD AP-HP : seules les variables techniques de l'acte sont assemblées en mémoire).",
-            "Boutons rapides pour les paramètres récurrents à Cochin : jauge du trocart, nombre de prélèvements microbiologiques/anatomopathologiques, respect du compartiment en concertation chirurgicale, dose de bléomycine ou cycles d'argon.",
-            "Synchronisable directement depuis tes fichiers Markdown de `/Users/thomaslefevre/2nd brain/`."
+            "Ce sont les **distracteurs proches** (anciens logs, anciennes versions du même fichier dans un long thread) qui causent le Context Rot, bien plus que du texte non lié.",
+            "Déléguer une sous-tâche exploratoire ou une revue à un **sous-agent à contexte vierge** (Subagent / `delegate_task`) isole totalement le bruit de recherche et ne renvoie au thread principal qu'une synthèse propre de 300 tokens.",
+            "Pour tes sessions T3 Code : ouvrir un nouveau thread propre par fonctionnalité majeure (ou s'appuyer sur un résumé d'état dans `AGENTS.md` / `HANDOVER.md`) maintient l'entropie d'attention au minimum."
         ],
-        "target_projects": ["second-brain", "cochin-os", "guide-infiltration"],
-        "workflow_how_to_fr": "Créer une mini-application ou un module dans `COCHIN·OS` / `Second Brain` permettant de générer en 10 secondes un CR opératoire de RI ou un CR diagnostique ostéo-articulaire irréprochable, copié dans le presse-papiers en 1 clic.",
+        "target_projects": ["tapp-store-allinone", "second-brain", "cochin-os"],
+        "workflow_how_to_fr": "Mettre en place deux réflexes issus de la recherche sur le *Context Rot* : 1) Utiliser des sous-agents de recherche (`research` subagent) quand il faut fouiller dans de nombreux fichiers afin de garder le thread principal immaculé, et 2) Maintenir un fichier `HANDOVER.md` ou un indicateur de santé de session dans ton dashboard `Agent Tracking (gemini-ultra)`.",
         "implementation_steps_fr": [
-            "Structurer les modèles de CR dans `/Users/thomaslefevre/2nd brain/03 - Imagerie Diagnostique & CR-Types/` avec des variables rapides (`{{cote}}`, `{{cible}}`, `{{materiel}}`, `{{anesthesie}}`).",
-            "Générer une interface web locale/PWA à boutons rapides (« Côté D / G », « AL / AG », « Trocart Bonopty / Ostycut / Coaxial », « RF / Cryo / Cimentoplastie / Biopsie / Infiltration ») qui copie le CR finalisé."
+            "Dans `Agent Tracking (allinone/gemini-ultra)`, calculer le nombre moyen de steps par prompt pour repérer les threads trop longs sujets au Context Rot.",
+            "Utiliser la délégation à des sous-agents spécialisés pour les audits multi-projets."
         ],
-        "t3_prompt": "À partir de mes notes dans /Users/thomaslefevre/2nd brain/02 - Radiologie Interventionnelle (RI) et 03 - Imagerie Diagnostique & CR-Types, crée un générateur interactif de Comptes-Rendus Types (RI & Ostéo-Articulaire Cochin) permettant de sélectionner en quelques clics le geste (biopsie osseuse/parties molles, RF ostéome ostéoïde, cryoablation desmoïde, cimentoplastie, infiltration rachis/périphérique), les paramètres techniques et de copier le CR complet prêt pour le RIS hospitalier."
+        "t3_prompt": "Dans /Users/thomaslefevre/.t3/projects/allinone/gemini-ultra/index.html, ajoute un indicateur « Santé du Contexte & Efficacité Cache » qui analyse le ratio Cache Hit (92.8%) et le ratio Steps/Prompts pour m'indiquer quand mes sessions sont optimales ou quand il est préférable d'ouvrir un thread frais pour éviter le Context Rot."
     },
     {
-        "id": "local-sqlite-ai-finance-categorizer",
-        "category_id": "local_first_webgpu",
-        "date": "2026-10-31",
-        "date_fr": "Octobre 2026",
-        "maturity": "⚡ Quick Win (< 25 min)",
-        "setup_time": "20 min",
-        "cost_badge": "100 % Local • SQLite (`finance.db`)",
-        "source": "Local-First Finance & Deterministic + LLM Rules",
-        "source_url": "https://sqlite.org",
-        "title_fr": "Intelligence Financière Locale dans `PatrimoineOS` : catégorisation hybride SQLite & simulation de réallocation",
-        "summary_fr": "Ton application `PatrimoineOS` (`/Users/thomaslefevre/.t3/projects/finance`) agrège déjà en lecture seule et 100 % en local (SQLite `better-sqlite3`) tes comptes Crédit Mutuel (DSP2 GoCardless / CSV), tes wallets MetaMask & Ledger sur 6 chaînes EVM et ta collection Pokémon Collectr. C'est l'architecture idéale pour brancher une analyse financière intelligente sans jamais envoyer un seul relevé bancaire dans le cloud.",
-        "technical_breakthrough_fr": "Le pattern **Rule-Engine SQLite + Enrichissement local** consiste à associer des expressions régulières déterministes aux libellés bancaires récurrents (salaires AP-HP/gardes, Pajemploi AssMat, impôts, abonnements, virements d'épargne PEA/Livret) et à stocker l'historique journalier de tes 3 piliers pour calculer automatiquement ton taux d'épargne, ton exposition par classe d'actifs (Cash / Actions PEA / Crypto Cold vs Hot / Pokémon Scellés vs Cartes) et tes alertes de rééquilibrage.",
-        "key_points_fr": [
-            "Confidentialité totale : tout reste dans `/Users/thomaslefevre/.t3/projects/finance/data/finance.db` sur ton Mac.",
-            "Détection automatique des revenus de gardes / astreintes et des charges fixes mensuelles.",
-            "Suivi de la répartition de sécurité Cold Wallet (Ledger) vs Hot Wallet (MetaMask) et de la performance en EUR de ta collection Pokémon Collectr."
-        ],
-        "target_projects": ["patrimoine-os"],
-        "workflow_how_to_fr": "Ajouter dans `PatrimoineOS` un module d'analyse mensuelle automatique (Cashflow, Taux d'épargne, Répartition des 3 piliers et Historique Net Worth) directement propulsé par SQLite.",
-        "implementation_steps_fr": [
-            "Ajouter la table `net_worth_history` dans SQLite enregistrant à chaque synchronisation la valeur EUR de la Banque, de la Crypto et de Collectr.",
-            "Ajouter un classifieur automatique des libellés Crédit Mutuel avec badges visuels et graphique de répartition mensuelle."
-        ],
-        "t3_prompt": "Dans /Users/thomaslefevre/.t3/projects/finance, enrichis PatrimoineOS avec : 1) l'enregistrement automatique dans SQLite (data/finance.db) d'un snapshot d'historique à chaque synchronisation des 3 piliers (Crédit Mutuel, Crypto EVM, Pokémon Collectr), 2) un graphique d'évolution du patrimoine net, et 3) la catégorisation intelligente automatique des transactions Crédit Mutuel."
-    },
-    {
-        "id": "python-macos-daemons-cross-project-bridge",
-        "category_id": "voice_automation_iot",
-        "date": "2026-10-30",
-        "date_fr": "Octobre 2026",
-        "maturity": "🔥 Impact Immédiat",
-        "setup_time": "20 min",
-        "cost_badge": "100 % Local macOS",
-        "source": "macOS Local Automation & Cross-Repo Sync",
-        "source_url": "https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html",
-        "title_fr": "Unifier tes scripts Python macOS (`sync_sheet`, `sync_family_agenda`, `gemini_ultra_daemon`) en un tableau de bord unique",
-        "summary_fr": "En explorant l'ensemble de tes projets sur ton Mac, on découvre que tu as construit une vraie flotte d'agents Python locaux : `sync_sheet.py` et `fetch_imessages.py` dans `Agendainterventionnel`, `build_internes_data.py` dans `planning-interne`, `sync_family_agenda.py` dans `agenda-famille`, `gemini_ultra_daemon.py` et `sync_projects.py` dans `allinone`, `build_biblio_database.py` dans `biblioosteo`, `build.py` dans `biblio-marie`, et `process_takeout.py` dans `photo`.",
-        "technical_breakthrough_fr": "Plutôt que de lancer manuellement des fichiers `.command` dispersés dans `Documents/` et `.t3/projects/`, un orchestrateur local léger (ou un panneau dans `Tapp Store / Agent Tracking`) peut vérifier l'état de fraîcheur de chaque source de données (dernière synchro Google Sheet Cochin, dernier build Biblio, dernier push GitHub Pages, statut du daemon Gemini Ultra et Forestia) et tout synchroniser en 1 clic.",
-        "key_points_fr": [
-            "Visibilité immédiate sur la date de dernière mise à jour de chacun de tes 20+ projets.",
-            "Synchronisation en cascade : une mise à jour de ton planning de garde Cochin peut mettre à jour simultanément `Cochin RI`, `Agenda Famille` et ton briefing `Second Brain`.",
-            "Zéro oubli de régénération de `embedded_data.js` avant un push GitHub Pages."
-        ],
-        "target_projects": ["tapp-store-allinone", "agenda-interventionnel", "family-daily-apps", "biblioosteo"],
-        "workflow_how_to_fr": "Créer un script maître `sync_all_ecosystem.py` (ou l'intégrer au daemon local `127.0.0.1:8787`) qui vérifie l'état Git et la fraîcheur des données de tous tes projets en 2 secondes.",
-        "implementation_steps_fr": [
-            "Lister tous tes dépôts actifs (`/Users/thomaslefevre/.t3/projects/*` et `/Users/thomaslefevre/Documents/*`).",
-            "Vérifier pour chacun s'il y a des modifications locales non commitées ou des fichiers JSON plus récents que `embedded_data.js`.",
-            "Permettre une synchronisation globale en 1 commande."
-        ],
-        "t3_prompt": "Crée dans /Users/thomaslefevre/.t3/projects/allinone/scripts/ un script ecosystem_status.py qui inspecte tous mes projets (/Users/thomaslefevre/.t3/projects/* et /Users/thomaslefevre/Documents/Agendainterventionnel, planning-interne, agenda-famille, radio-thomas), vérifie leur statut Git, la fraîcheur des fichiers embedded_data.js et l'état des daemons locaux."
-    },
-    {
-        "id": "custom-mcp-server-cochin-ecosystem",
-        "category_id": "agents_harness",
-        "date": "2026-10-29",
-        "date_fr": "Octobre 2026",
-        "maturity": "🧪 Architecture / Haute Valeur",
+        "id": "context-aware-mcp-shared-context-stores",
+        "category_id": "agentic_protocols_swe",
+        "date": "2026-01-19",
+        "date_fr": "Spécification MCP 2025–2026 • arXiv:2601.11595",
+        "paper_ref": "Anthropic / Linux Foundation (MCP Spec) & CA-MCP (arXiv:2601.11595)",
+        "maturity": "🔌 Standard Industriel Universel",
         "setup_time": "25 min",
-        "cost_badge": "0 € • Serveur MCP Python/Node Local",
-        "source": "Model Context Protocol (MCP) • Lazy Tools",
-        "source_url": "https://modelcontextprotocol.io",
-        "title_fr": "Serveur MCP personnel « Cochin & Biblio » : donner à tes agents un accès natif typé à Zotero, PubMed et ton Planning RI",
-        "summary_fr": "Au lieu que chaque agent T3 Code ou Claude Code doive deviner où se trouvent tes scripts Python (`sync_sheet.py`, `zotero_sync.py`, `add_article.py`), un micro-serveur MCP local de 120 lignes expose 4 outils typés : `search_biblio_cochin`, `get_ri_schedule`, `add_pubmed_to_biblio` et `search_second_brain`.",
-        "technical_breakthrough_fr": "Avec le chargement paresseux (Lazy Tool Loading) des schémas MCP, exposer tes propres outils locaux ne consomme aucun token de contexte tant que l'agent n'en a pas besoin, mais garantit que n'importe quel thread (même ouvert depuis un autre projet) peut interroger instantanément ton planning de garde, ta base Zotero ou tes 75 fiches d'infiltrations.",
+        "cost_badge": "0 € • JSON-RPC 2.0 Local",
+        "source": "Model Context Protocol (MCP) & Context-Aware MCP (CA-MCP)",
+        "source_url": "https://arxiv.org/abs/2601.11595",
+        "title_fr": "Model Context Protocol (MCP) & Context-Aware MCP (arXiv:2601.11595) : l'architecture à mémoire partagée entre serveurs d'outils",
+        "summary_fr": "Inspiré du *Language Server Protocol (LSP)*, le **Model Context Protocol (MCP)** a standardisé la connexion entre les modèles d'IA et les sources de données locales via JSON-RPC 2.0 (en séparant strictement *Resources*, *Prompts* et *Tools*). En 2026, les travaux sur **Context-Aware MCP (CA-MCP, arXiv:2601.11595)** et le *Lazy Tool Loading* ont résolu les deux limites initiales du protocole : l'inflation du prompt par des dizaines de schémas JSON d'outils, et le fait que le LLM devait servir de « passe-plat » coûteux pour copier des données d'un serveur A (ex. PubMed) vers un serveur B (ex. Zotero ou Obsidian).",
+        "technical_breakthrough_fr": "Comment fonctionnent le *Lazy Tool Loading* et le *Shared Context Store (SCS)* de CA-MCP ? 1) Avec le chargement paresseux (que ton harnais T3 Code utilise déjà dans `/mcp/`), seuls les noms des outils sont injectés dans le prompt initial ; l'agent ne lit le schéma JSON complet d'un outil que lorsqu'il décide de l'appeler (économie de 85 % des tokens système). 2) Avec un *Shared Context Store*, deux outils MCP locaux partagent un espace d'état local (ex. un fichier SQLite ou un état JSON sur disque) en ne passant au LLM qu'un identifiant de référence léger (`ref_id`) au lieu de faire transiter 20 pages d'abstracts ou de planning brut dans les tokens générés.",
         "key_points_fr": [
-            "Accessible depuis n'importe quel workspace T3 Code ou Claude Desktop sans copier de chemins absolus.",
-            "Sécurité garantie : le serveur MCP tourne en `stdio` local sur ton Mac et applique automatiquement tes filtres d'anonymisation RGPD.",
-            "Permet de croiser en 1 question : *« Quels sont mes gestes de RI demain et quels articles de BiblioOstéo s'y rapportent ? »*"
+            "Passer un `pmid` ou un `ref_id` entre outils locaux plutôt que de faire régénérer tout le texte par le LLM divise par 10 la latence et élimine tout risque de troncature ou d'altération du texte original.",
+            "Permet d'exposer ton écosystème médical (`BiblioOstéo`, `BiblioMarie`, `Guide Infiltrations`, `Planning RI Cochin`, `Second Brain`) sous forme d'un serveur MCP unique.",
+            "Compatible à la fois avec T3 Code, Claude Code et même le firmware WebSocket de ton boîtier `xiaozhi-esp32-amoled-1.8`."
         ],
-        "target_projects": ["agenda-interventionnel", "biblioosteo", "second-brain", "cochin-os"],
-        "workflow_how_to_fr": "Créer un serveur MCP léger en Python (`cochin_mcp_server.py`) qui expose en lecture/écriture propre tes bases JSON locales (`BiblioOstéo`, `BiblioMarie`, `Guide Infiltrations`, `Planning RI` et `Second Brain`).",
+        "target_projects": ["agenda-interventionnel", "biblioosteo", "second-brain", "family-daily-apps"],
+        "workflow_how_to_fr": "Construire un micro-serveur MCP local en Python qui utilise le pattern *Pass-by-Reference* : quand tu demandes d'ajouter un article à `BiblioOstéo` et Zotero, l'outil récupère l'abstract PubMed et le PDF directement sur disque et ne renvoie au LLM que les champs nécessaires à la synthèse française.",
         "implementation_steps_fr": [
-            "Écrire un script Python MCP standard exposant `get_cochin_schedule`, `lookup_infiltration_sheet`, `search_biblio` et `create_obsidian_note`.",
-            "L'enregistrer dans ta configuration MCP locale pour que tous tes agents y aient accès nativement."
+            "Créer un serveur MCP Python exposant tes données Cochin/Biblio/Famille en JSON-RPC.",
+            "Utiliser des références locales (`pmid`, `procedure_id`, `date_iso`) pour éviter de faire transiter de gros payloads JSON dans la fenêtre de conversation."
         ],
-        "t3_prompt": "Crée un serveur MCP Python local (cochin_mcp_server.py) qui expose en outils typés : 1) la recherche dans les 75 fiches de /Users/thomaslefevre/.t3/projects/guide-infiltration/guide-data.json, 2) la recherche dans /Users/thomaslefevre/.t3/projects/biblioosteo/data/articles.json et biblio-marie, 3) la lecture du planning /Users/thomaslefevre/Documents/Agendainterventionnel/cochin_planning.json, et 4) la recherche dans /Users/thomaslefevre/2nd brain."
-    },
-    {
-        "id": "client-side-dicom-windowing-presets-ai",
-        "category_id": "medical_vision",
-        "date": "2026-10-28",
-        "date_fr": "Octobre 2026",
-        "maturity": "⚡ Quick Win (< 20 min)",
-        "setup_time": "15 min",
-        "cost_badge": "100 % Client-Side (Canvas / WebGL)",
-        "source": "Radiological Histogram Auto-Windowing & CLAHE",
-        "source_url": "https://cornerstonejs.org",
-        "title_fr": "Auto-Fenêtrage intelligent par analyse d'histogramme & Presets Ostéo/Parties Molles dans `QUIZ Imagerie` et `Archives`",
-        "summary_fr": "Sur des captures JPEG/PNG/WebP ou des PDF de présentations (contrairement au DICOM brut 16-bits de `TPack PACS`), le réglage manuel de luminosité/contraste perd souvent du détail dans les corticales osseuses ou l'œdème médullaire STIR/T2 Fat-Sat. L'analyse automatique des percentiles d'histogramme (`P2–P98`) + l'égalisation adaptative locale (CLAHE en WebGL/Canvas) permet d'offrir 3 boutons de presets instantanés : `🦴 Os / Corticale`, `🥩 Parties Molles`, et `⚡ Rehaussement Nidus / STIR`.",
-        "technical_breakthrough_fr": "En calculant à la volée la courbe de transfert (LUT 256 valeurs) sur les pixels de la région d'intérêt (en excluant le fond noir radiologique `< 12`), on simule un fenêtrage radiologique bluffant même sur des images 8-bits issues du presse-papiers (`Cmd+V`) ou d'une diapo PDF.",
-        "key_points_fr": [
-            "Améliore immédiatement le confort visuel sur mobile dans `QUIZ Imagerie (quiz-image-3)` et la visionneuse d'`Archives des Internes`.",
-            "1 tap sur `🦴 Os` ou `🧲 STIR/T2` au lieu de glisser manuellement deux curseurs sur petit écran.",
-            "Zéro latence : calcul de la LUT en moins de 2 millisecondes en JavaScript pur."
-        ],
-        "target_projects": ["quiz-imagerie", "archive-des-internes", "dicomviewer-radio-thomas"],
-        "workflow_how_to_fr": "Ajouter 3 boutons de presets radiologiques intelligents (`Os`, `Parties Molles`, `Auto-Contraste CLAHE`) dans la barre d'outils de la visionneuse de `QUIZ Imagerie` et d'`Archives des Internes`.",
-        "implementation_steps_fr": [
-            "Calculer l'histogramme de luminance de l'image active en ignorant les bordures noires.",
-            "Ajouter les presets 1-tap dans la barre de contrôle de la visionneuse à côté du bouton Négatif/Positif."
-        ],
-        "t3_prompt": "Dans la visionneuse radiologique de /Users/thomaslefevre/.t3/projects/quiz-image-3 et /Users/thomaslefevre/.t3/projects/archive-des-internes, ajoute 3 presets de fenêtrage instantanés en 1 tap (🦴 Os/Corticale, 🧲 Parties Molles/STIR, ✨ Auto-Histogramme) basés sur l'analyse des percentiles de l'image."
-    },
-    {
-        "id": "esp32-xiaozhi-medical-desk-companion",
-        "category_id": "voice_automation_iot",
-        "date": "2026-10-26",
-        "date_fr": "Octobre 2026",
-        "maturity": "🧪 Fun & Hardware",
-        "setup_time": "30 min",
-        "cost_badge": "Local Wi-Fi / WebSocket",
-        "source": "ESP32-S3 AMOLED 1.8\" • WebSocket Voice Agent",
-        "source_url": "https://github.com/78/xiaozhi-esp32",
-        "title_fr": "Connecter ton boîtier `xiaozhi-esp32-amoled-1.8` à ton Agenda Famille, tes Quotas IA et tes Rappels de Garde",
-        "summary_fr": "Tu as dans tes projets `/Users/thomaslefevre/Documents/antigravity/xiaozhi-esp32-amoled-1.8`. Cet écran AMOLED 1.8\" sur ESP32-S3 peut faire bien plus qu'un chatbot vocal générique : branché sur ton daemon local Mac mini (`127.0.0.1:8787` / réseau local `192.168.1.111`), il devient un afficheur de bureau temps réel (Prochaine garde Cochin, planning Mabrouka du lendemain, jauge Google AI Ultra / Claude Pro, ou minuteur de révision).",
-        "technical_breakthrough_fr": "Le firmware Xiaozhi supporte les outils MCP (via WebSocket) et l'affichage de widgets personnalisés sur l'écran AMOLED. En lui exposant un endpoint JSON léger sur ton Mac (`192.168.1.111`), il répond vocalement à *« Qui est de garde demain ? »* ou *« À quelle heure arrive Mabrouka jeudi ? »* en lisant directement `family_data.json` et `cochin_gardes.json`.",
-        "key_points_fr": [
-            "Réutilise l'infrastructure réseau local que tu as déjà mise en place pour `M4 Gaming` (`192.168.1.111:8765`) et `Forestia Mobile` (`192.168.1.111:8790`).",
-            "Consultation vocale ou visuelle en un coup d'œil sans sortir le téléphone.",
-            "100 % sur ton Wi-Fi domestique."
-        ],
-        "target_projects": ["family-daily-apps", "tapp-store-allinone", "agenda-interventionnel"],
-        "workflow_how_to_fr": "Exposer sur ton daemon Python local une route `/api/desk-summary` renvoyant la météo du planning familial, la prochaine garde Cochin et le quota IA restant pour ton ESP32 AMOLED.",
-        "implementation_steps_fr": [
-            "Inspecter la configuration actuelle de `/Users/thomaslefevre/Documents/antigravity/xiaozhi-esp32-amoled-1.8`.",
-            "Ajouter un endpoint JSON compact dans ton daemon local sur `192.168.1.111`."
-        ],
-        "t3_prompt": "Inspecte /Users/thomaslefevre/Documents/antigravity/xiaozhi-esp32-amoled-1.8 et crée un endpoint local sur mon Mac qui lui fournit le résumé de mon Agenda Famille (/Users/thomaslefevre/Documents/agenda-famille/family_data.json), mes prochaines gardes Cochin et mon quota Gemini Ultra / Claude en direct."
+        "t3_prompt": "Crée un serveur MCP Python local (cochin_mcp_server.py) basé sur l'architecture Context-Aware MCP (arXiv:2601.11595) qui expose en outils typés : 1) la recherche dans les 75 fiches de /Users/thomaslefevre/.t3/projects/guide-infiltration/guide-data.json, 2) l'ingestion directe PubMed → BiblioOstéo / BiblioMarie par référence PMID sans saturer le contexte, et 3) la lecture de /Users/thomaslefevre/Documents/Agendainterventionnel/cochin_planning.json."
     }
 ]
 
 
+AI_KEYWORDS_REGEX = re.compile(
+    r"\b(ai|llm|llms|gpt|claude|gemini|deepseek|qwen|llama|mistral|transformer|transformers|"
+    r"diffusion|rag|graphrag|mcp|agent|agents|agentic|rlhf|grpo|lora|qlora|vlm|vision|"
+    r"neural|deep learning|machine learning|webgpu|onnx|mlx|cuda|tensor|pytorch|jax|"
+    r"embedding|embeddings|vector|ocr|tts|whisper|speech|benchmark|arxiv|inference|quantization)\b",
+    re.IGNORECASE
+)
+
 
 def fetch_live_signals() -> list[dict]:
-    """Récupère en direct les dernières actualités techniques IA (Hacker News Algolia + ArXiv API)."""
+    """Récupère en direct les vraies publications & actualités IA (Hugging Face Daily Papers + ArXiv + HN filtré IA)."""
     live_items: list[dict] = []
     now_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    # 1. Hacker News Algolia API (LLM / MCP / Coding Agents / Medical AI)
+    # 1. Hugging Face Daily Papers API (Les vrais papers IA votés par la communauté chercheur/dev)
     try:
-        url = "https://hn.algolia.com/api/v1/search_by_date?query=LLM&tags=story&numericFilters=points%3E20&hitsPerPage=8"
-        req = urllib.request.Request(url, headers={"User-Agent": "NewsAI-ThomasLefevre/1.0"})
+        hf_url = "https://huggingface.co/api/daily_papers?limit=8"
+        req = urllib.request.Request(hf_url, headers={"User-Agent": "NewsAI-ThomasLefevre/2.0"})
         with urllib.request.urlopen(req, timeout=8) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            for hit in data.get("hits", []):
-                title = hit.get("title") or ""
-                story_url = hit.get("url") or f"https://news.ycombinator.com/item?id={hit.get('objectID')}"
-                points = hit.get("points", 0)
-                comments = hit.get("num_comments", 0)
-                created = (hit.get("created_at") or "")[:10]
-                live_items.append({
-                    "id": f"hn-{hit.get('objectID')}",
-                    "source": "Hacker News Tech",
-                    "badge": f"▲ {points} pts · 💬 {comments}",
-                    "date": created,
-                    "title": title,
-                    "url": story_url,
-                    "discuss_url": f"https://news.ycombinator.com/item?id={hit.get('objectID')}",
-                    "fetched_at": now_iso
-                })
+            papers = json.loads(resp.read().decode("utf-8"))
+            for item in papers[:6]:
+                paper = item.get("paper") or {}
+                pid = paper.get("id") or ""
+                title = " ".join((paper.get("title") or item.get("title") or "").split())
+                summary = " ".join((paper.get("summary") or item.get("summary") or "").split())
+                upvotes = paper.get("upvotes", 0)
+                pub_date = (paper.get("publishedAt") or item.get("publishedAt") or "")[:10]
+                if title and pid:
+                    live_items.append({
+                        "id": f"hf-{pid}",
+                        "source": "Hugging Face Daily Paper",
+                        "badge": f"🔥 ▲ {upvotes} upvotes · arXiv:{pid}",
+                        "date": pub_date,
+                        "title": title,
+                        "summary": summary[:300] + ("…" if len(summary) > 300 else ""),
+                        "url": f"https://huggingface.co/papers/{pid}",
+                        "discuss_url": f"https://arxiv.org/abs/{pid}",
+                        "fetched_at": now_iso
+                    })
     except Exception as exc:
-        print(f"[warn] HN live fetch skipped: {exc}")
+        print(f"[warn] HF Daily Papers fetch skipped: {exc}")
 
-    # 2. ArXiv API (Medical Imaging AI & Multimodal Agents)
+    # 2. ArXiv API (Medical Imaging AI, Multimodal VLMs & Reasoning LLMs)
     try:
-        query = urllib.parse.quote('cat:eess.IV OR (cat:cs.CV AND all:"medical imaging") OR (cat:cs.AI AND all:"agent")')
+        query = urllib.parse.quote('cat:eess.IV OR (cat:cs.CV AND all:"medical") OR (cat:cs.CL AND (all:"reasoning" OR all:"retrieval"))')
         arxiv_url = f"https://export.arxiv.org/api/query?search_query={query}&sortBy=submittedDate&sortOrder=descending&max_results=6"
-        req = urllib.request.Request(arxiv_url, headers={"User-Agent": "NewsAI-ThomasLefevre/1.0"})
+        req = urllib.request.Request(arxiv_url, headers={"User-Agent": "NewsAI-ThomasLefevre/2.0"})
         with urllib.request.urlopen(req, timeout=8) as resp:
             xml_bytes = resp.read()
             root = ET.fromstring(xml_bytes)
@@ -652,14 +635,15 @@ def fetch_live_signals() -> list[dict]:
                 summary = " ".join((entry.findtext("a:summary", "", ns) or "").split())
                 link = entry.findtext("a:id", "", ns)
                 published = (entry.findtext("a:published", "", ns) or "")[:10]
+                arxiv_id = link.rsplit("/", 1)[-1] if link else ""
                 if title and link:
                     live_items.append({
-                        "id": f"arxiv-{link.rsplit('/', 1)[-1]}",
-                        "source": "ArXiv Preprint",
-                        "badge": "📄 Paper IA / Imagerie",
+                        "id": f"arxiv-{arxiv_id}",
+                        "source": "ArXiv Preprint (IA & Imagerie)",
+                        "badge": f"📄 arXiv:{arxiv_id}",
                         "date": published,
                         "title": title,
-                        "summary": summary[:280] + ("…" if len(summary) > 280 else ""),
+                        "summary": summary[:300] + ("…" if len(summary) > 300 else ""),
                         "url": link,
                         "discuss_url": link,
                         "fetched_at": now_iso
@@ -667,12 +651,43 @@ def fetch_live_signals() -> list[dict]:
     except Exception as exc:
         print(f"[warn] ArXiv live fetch skipped: {exc}")
 
+    # 3. Hacker News Algolia API — Filtré strictement sur le titre avec mots-clés IA / LLM / ML
+    try:
+        hn_url = (
+            "https://hn.algolia.com/api/v1/search_by_date?"
+            "query=LLM&restrictSearchableAttributes=title&tags=story&numericFilters=points%3E25&hitsPerPage=12"
+        )
+        req = urllib.request.Request(hn_url, headers={"User-Agent": "NewsAI-ThomasLefevre/2.0"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            for hit in data.get("hits", []):
+                title = hit.get("title") or ""
+                if not AI_KEYWORDS_REGEX.search(title):
+                    continue
+                story_url = hit.get("url") or f"https://news.ycombinator.com/item?id={hit.get('objectID')}"
+                points = hit.get("points", 0)
+                comments = hit.get("num_comments", 0)
+                created = (hit.get("created_at") or "")[:10]
+                live_items.append({
+                    "id": f"hn-{hit.get('objectID')}",
+                    "source": "Hacker News AI",
+                    "badge": f"▲ {points} pts · 💬 {comments}",
+                    "date": created,
+                    "title": title,
+                    "summary": "Discussion technique et retours d'ingénierie de la communauté Hacker News.",
+                    "url": story_url,
+                    "discuss_url": f"https://news.ycombinator.com/item?id={hit.get('objectID')}",
+                    "fetched_at": now_iso
+                })
+    except Exception as exc:
+        print(f"[warn] HN live fetch skipped: {exc}")
+
     return live_items
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build News AI data files")
-    parser.add_argument("--fetch-live", action="store_true", help="Fetch live HN & ArXiv AI news")
+    parser.add_argument("--fetch-live", action="store_true", help="Fetch live HF Papers, ArXiv & HN AI news")
     args = parser.parse_args()
 
     live_signals: list[dict] = []
@@ -711,7 +726,7 @@ def main() -> None:
         f"window.NEWS_AI_DATA = {json.dumps(payload, ensure_ascii=False, indent=2)};\n"
     )
     embedded_file.write_text(js_content, encoding="utf-8")
-    print(f"✓ Base construite : {len(NEWS_ITEMS)} fiches techniques, {len(PROJECTS)} ensembles de projets, {len(live_signals)} signaux live.")
+    print(f"✓ Base construite : {len(NEWS_ITEMS)} avancées & méthodes scientifiques, {len(PROJECTS)} pôles projets, {len(live_signals)} papers/signaux live.")
 
 
 if __name__ == "__main__":

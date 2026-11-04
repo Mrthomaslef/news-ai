@@ -1021,13 +1021,13 @@
       <!-- 4 Onglets de Navigation Principale -->
       <nav class="mode-tabs" id="modeTabs" aria-label="Modes">
         <button class="mode-tab active" data-mode="feed" onclick="switchMode('feed')">
-          📰 Avancées &amp; Workflow <span class="count-pill" id="countFeed">11</span>
-        </button>
-        <button class="mode-tab" data-mode="projects" onclick="switchMode('projects')">
-          🗺️ Audit de Mes Projets <span class="count-pill" id="countProjects">12</span>
+          🔬 Avancées &amp; Méthodes IA <span class="count-pill" id="countFeed">8</span>
         </button>
         <button class="mode-tab" data-mode="live" onclick="switchMode('live')">
-          ⚡ Radar Live (HN &amp; ArXiv) <span class="count-pill" id="countLive">14</span>
+          📄 Papers &amp; Radar Live (HF / ArXiv) <span class="count-pill" id="countLive">21</span>
+        </button>
+        <button class="mode-tab" data-mode="projects" onclick="switchMode('projects')">
+          🗺️ Implantation par Projet <span class="count-pill" id="countProjects">10</span>
         </button>
         <button class="mode-tab" data-mode="harness" onclick="switchMode('harness')">
           🛠️ Mon Harnais T3 Code
@@ -1043,13 +1043,13 @@
               type="search"
               id="searchInput"
               class="search-input"
-              placeholder="Rechercher (MCP, Zotero, PDF.js, DICOM, CR-type, SQLite, Council, WebGPU…)"
+              placeholder="Rechercher une méthode ou un paper (GRPO, ColPali, MedSAM 2, HippoRAG, EAGLE-3, XGrammar, Kokoro…)"
               oninput="onSearchInput()"
             />
             <button class="clear-btn" id="clearSearchBtn" onclick="clearSearch()">✕</button>
           </div>
           <select class="sort-select" id="sortSelect" onchange="renderActiveView()" aria-label="Trier">
-            <option value="impact">🔥 Impact &amp; Quick Wins</option>
+            <option value="impact">🔬 Impact Scientifique &amp; Méthodes</option>
             <option value="date">📅 Plus récents</option>
             <option value="todo">🎯 À tester en priorité</option>
           </select>
@@ -1069,24 +1069,24 @@
     <!-- Bandeau KPI Écosystème -->
     <section class="kpi-strip" id="kpiStrip">
       <div class="kpi-card">
-        <div class="kpi-label">Projets Analysés</div>
-        <div class="kpi-val" id="kpiProjectsCount">24 apps</div>
-        <div class="kpi-sub">Cochin • Biblio • Finance • Famille</div>
+        <div class="kpi-label">Méthodes &amp; Papers</div>
+        <div class="kpi-val" id="kpiPlaybooksCount">8 méthodes</div>
+        <div class="kpi-sub">GRPO • ColPali • MedSAM 2 • HippoRAG</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Playbooks Prêts</div>
-        <div class="kpi-val" id="kpiPlaybooksCount">11 guides</div>
-        <div class="kpi-sub">Avec prompts T3 Code en 1 clic</div>
+        <div class="kpi-label">Flux Scientifique Live</div>
+        <div class="kpi-val" id="kpiLiveCount">21 papers</div>
+        <div class="kpi-sub">HF Daily Papers • ArXiv • HN AI</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Projets Connectés</div>
+        <div class="kpi-val" id="kpiProjectsCount">24 apps</div>
+        <div class="kpi-sub">Cochin • Biblio • Obsidian • Finance</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Suivi Implantation</div>
-        <div class="kpi-val" id="kpiDoneCount">0 / 11</div>
-        <div class="kpi-sub" id="kpiDoingSub">Clique sur un statut pour suivre</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Harnais Actif</div>
-        <div class="kpi-val">Argon + Opus</div>
-        <div class="kpi-sub">92.8% Cache Hit • Skill Council</div>
+        <div class="kpi-val" id="kpiDoneCount">0 / 8</div>
+        <div class="kpi-sub" id="kpiDoingSub">Prêt à copier dans T3 Code</div>
       </div>
     </section>
 
@@ -1095,7 +1095,7 @@
       <div class="count-bar">
         <span id="resultsCount">Chargement…</span>
         <span style="font-weight: 600; color: var(--accent-text);">
-          💡 Astuce : clique sur « 📋 Copier Prompt T3 Code » puis colle-le directement dans ton chat
+          💡 Chaque fiche décrypte la vraie méthode algorithmique (paper ArXiv/Nature/ICLR) + comment l'implanter chez toi
         </span>
       </div>
       <div class="cards-list" id="newsList"></div>
@@ -1105,18 +1105,18 @@
     <section id="viewProjects" style="display: none;">
       <div class="count-bar">
         <span>Cartographie complète de tes dépôts locaux (`/Users/thomaslefevre/.t3/projects` &amp; `Documents`)</span>
-        <span>Chaque opportunité inclut un prompt T3 Code sur-mesure</span>
+        <span>Chaque opportunité applique une méthode IA récente à ton code</span>
       </div>
       <div class="projects-grid" id="projectsList"></div>
     </section>
 
-    <!-- Vue 3 : Radar Live Web (Hacker News & ArXiv Imagerie/IA) -->
+    <!-- Vue 3 : Radar Live Web (Hugging Face Daily Papers, ArXiv & HN AI) -->
     <section id="viewLive" style="display: none;">
       <div class="live-header-box">
         <div>
-          <h2 style="font-size: 1rem; font-weight: 800;">⚡ Signaux Techniques en Direct (Hacker News Algolia &amp; ArXiv Imagerie/Agents)</h2>
+          <h2 style="font-size: 1rem; font-weight: 800;">📄 Radar Scientifique &amp; Technique en Direct (Hugging Face Daily Papers • ArXiv • HN AI)</h2>
           <p style="font-size: 0.8rem; color: var(--text-muted);" id="liveTimestamp">
-            Flux temps réel combinant les papers ArXiv (`eess.IV`, `cs.CV`, `cs.AI`) et les discussions techniques HN.
+            Flux temps réel des dernières publications de recherche IA (`Hugging Face Papers`, `ArXiv eess.IV / cs.CV / cs.CL`) et discussions techniques filtrées 100 % IA.
           </p>
         </div>
         <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
@@ -1124,12 +1124,12 @@
             type="search"
             id="liveQueryInput"
             class="field-input"
-            style="width: 190px; padding: 0.42rem 0.65rem; font-size: 0.8rem;"
-            value="LLM OR MCP OR WebGPU"
-            placeholder="Thème HN (ex: Claude, DICOM…)"
+            style="width: 195px; padding: 0.42rem 0.65rem; font-size: 0.8rem;"
+            value="LLM"
+            placeholder="Thème IA (ex: LLM, RAG, VLM…)"
           />
           <button class="btn-action btn-action-primary" onclick="fetchLiveHNFromBrowser()">
-            🔄 Scanner en direct
+            🔄 Actualiser le flux Live
           </button>
         </div>
       </div>
@@ -1313,7 +1313,9 @@
       document.getElementById('countFeed').textContent = all.length;
       document.getElementById('countProjects').textContent = projects.length;
       document.getElementById('countLive').textContent = liveSignals.length;
-      document.getElementById('kpiPlaybooksCount').textContent = `${all.length} guides`;
+      document.getElementById('kpiPlaybooksCount').textContent = `${all.length} méthodes`;
+      const kpiLive = document.getElementById('kpiLiveCount');
+      if (kpiLive) kpiLive.textContent = `${liveSignals.length} papers`;
       document.getElementById('kpiDoneCount').textContent = `${done} / ${all.length} implantés`;
       document.getElementById('kpiDoingSub').textContent = doing > 0
         ? `${doing} en cours d'implantation • ${favSet.size} favori(s)`
@@ -1326,10 +1328,7 @@
       const wrap = document.getElementById('categoryPills');
       let html = `
         <button class="pill ${currentCategory === 'all' ? 'active' : ''}" onclick="setCategory('all')">
-          Toutes (${all.length})
-        </button>
-        <button class="pill ${currentCategory === 'quickwin' ? 'active' : ''}" onclick="setCategory('quickwin')">
-          ⚡ Quick Wins
+          Toutes les méthodes (${all.length})
         </button>
         <button class="pill ${currentCategory === 'fav' ? 'active' : ''}" onclick="setCategory('fav')">
           ★ Favoris (${favSet.size})
@@ -1415,8 +1414,7 @@
 
       let filtered = all.filter(item => {
         if (currentCategory === 'fav' && !favSet.has(item.id)) return false;
-        if (currentCategory === 'quickwin' && !(item.maturity || '').toLowerCase().includes('quick')) return false;
-        if (currentCategory !== 'all' && currentCategory !== 'fav' && currentCategory !== 'quickwin' && item.category_id !== currentCategory) {
+        if (currentCategory !== 'all' && currentCategory !== 'fav' && item.category_id !== currentCategory) {
           return false;
         }
         if (currentProject !== 'all' && !(item.target_projects || []).includes(currentProject)) {
@@ -1425,7 +1423,7 @@
         if (q) {
           const hay = [
             item.title_fr, item.summary_fr, item.technical_breakthrough_fr,
-            item.workflow_how_to_fr, item.t3_prompt, item.source,
+            item.workflow_how_to_fr, item.t3_prompt, item.source, item.paper_ref,
             (item.key_points_fr || []).join(' '),
             (item.target_projects || []).join(' ')
           ].join(' ').toLowerCase();
@@ -1442,7 +1440,7 @@
       }
 
       document.getElementById('resultsCount').textContent =
-        `${filtered.length} avancée${filtered.length > 1 ? 's' : ''} technique${filtered.length > 1 ? 's' : ''} sélectionnée${filtered.length > 1 ? 's' : ''}`;
+        `${filtered.length} avancée${filtered.length > 1 ? 's' : ''} & méthode${filtered.length > 1 ? 's' : ''} scientifique${filtered.length > 1 ? 's' : ''}`;
 
       const listEl = document.getElementById('newsList');
       if (filtered.length === 0) {
@@ -1458,7 +1456,7 @@
       }
 
       listEl.innerHTML = filtered.map(item => {
-        const catObj = categories.find(c => c.id === item.category_id) || { short: '🤖 IA' };
+        const catObj = categories.find(c => c.id === item.category_id) || { short: '🔬 IA' };
         const st = statusMap[item.id] || 'todo';
         const isFav = favSet.has(item.id);
         const targetChips = (item.target_projects || []).map(pid => {
@@ -1473,21 +1471,38 @@
             <div class="card-meta">
               <div class="meta-badges">
                 <span class="badge badge-cat">${esc(catObj.short)}</span>
-                <span class="badge badge-maturity">${esc(item.maturity || '⚡ Workflow')}</span>
-                <span class="badge badge-setup">⏱ ${esc(item.setup_time || '15 min')}</span>
-                <span class="badge badge-setup">💎 ${esc(item.cost_badge || 'Local')}</span>
+                <span class="badge badge-maturity">${esc(item.maturity || '🔬 Méthode')}</span>
+                <span class="badge badge-setup">💎 ${esc(item.cost_badge || 'Open')}</span>
               </div>
-              <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 500;">
-                ${esc(item.date_fr || item.date)} • ${esc(item.source)}
+              <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600;">
+                📄 ${esc(item.date_fr || item.date)}
               </span>
             </div>
 
             <h2 class="card-title" onclick="openReader('${item.id}')">${esc(item.title_fr)}</h2>
 
+            ${item.paper_ref ? `
+              <div style="font-size: 0.79rem; color: var(--accent-text); font-weight: 600; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                <span>📚 Référence : ${esc(item.paper_ref)}</span>
+                ${item.source_url ? `<a href="${esc(item.source_url)}" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: underline;">Paper original ↗</a>` : ''}
+              </div>
+            ` : ''}
+
             <p class="card-summary">${esc(item.summary_fr)}</p>
 
+            ${item.technical_breakthrough_fr ? `
+              <details style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; font-size: 0.84rem; color: var(--text-secondary);">
+                <summary style="font-weight: 700; color: var(--text-main); cursor: pointer;">
+                  ⚙️ Comment fonctionne la méthode sous le capot (Algorithme &amp; Architecture)
+                </summary>
+                <div style="margin-top: 0.5rem; line-height: 1.58;">
+                  ${esc(item.technical_breakthrough_fr)}
+                </div>
+              </details>
+            ` : ''}
+
             <div class="workflow-box">
-              <div class="workflow-box-title">🎯 Comment l'implanter dans ton workflow :</div>
+              <div class="workflow-box-title">🎯 Comment l'implanter dans tes projets :</div>
               <div>${esc(item.workflow_how_to_fr)}</div>
               ${targetChips ? `<div class="project-chips" style="margin-top: 0.25rem;">${targetChips}</div>` : ''}
             </div>
@@ -1505,11 +1520,12 @@
             <div class="card-actions">
               <div class="action-group">
                 <button class="btn-action btn-action-primary" onclick="openReader('${item.id}')">
-                  📖 Fiche complète &amp; Étapes
+                  📖 Fiche complète &amp; Formules
                 </button>
                 <button class="btn-action" onclick="copyPromptById('${item.id}')">
                   📋 Prompt T3 Code
                 </button>
+                ${item.source_url ? `<a class="btn-action" href="${esc(item.source_url)}" target="_blank" rel="noopener">📄 Paper ArXiv ↗</a>` : ''}
                 <button class="btn-action" onclick="exportSingleObsidian('${item.id}')" title="Copier au format note Obsidian pour 2nd brain">
                   🧠 + Obsidian
                 </button>
@@ -1565,7 +1581,7 @@
 
         const relatedBadges = relatedNews.map(n => `
           <button class="project-chip" onclick="openReader('${n.id}')">
-            📰 ${esc(n.title_fr.slice(0, 52))}…
+            🔬 ${esc(n.title_fr.slice(0, 52))}…
           </button>
         `).join('');
 
@@ -1584,7 +1600,7 @@
                 ${p.prodUrl ? `<a class="btn-action" href="${esc(p.prodUrl)}" target="_blank" rel="noopener">🌐 Ouvrir App ↗</a>` : ''}
                 ${p.githubUrl ? `<a class="btn-action" href="${esc(p.githubUrl)}" target="_blank" rel="noopener">💻 GitHub ↗</a>` : ''}
                 <button class="btn-action btn-action-primary" onclick="setProjectFilter('${p.id}')">
-                  🔍 Voir les ${relatedNews.length} playbooks liés
+                  🔍 Voir les ${relatedNews.length} méthodes liées
                 </button>
               </div>
             </div>
@@ -1596,7 +1612,7 @@
 
             <div class="opp-list">
               <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent-text);">
-                🚀 Évolutions IA sur-mesure prêtes à implanter :
+                🚀 Méthodes IA applicables à ce projet :
               </div>
               ${oppsHtml}
             </div>
@@ -1604,7 +1620,7 @@
             ${relatedBadges ? `
               <div style="border-top: 1px solid var(--border); padding-top: 0.55rem;">
                 <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.35rem;">
-                  Fiches techniques News AI applicables à ce projet :
+                  Fiches scientifiques News AI associées :
                 </span>
                 <div class="project-chips">${relatedBadges}</div>
               </div>
@@ -1622,13 +1638,13 @@
       }
     }
 
-    /* ---------- Vue 3 : Radar Live Web (HN & ArXiv) ---------- */
+    /* ---------- Vue 3 : Radar Live Web (Hugging Face Papers, ArXiv & HN AI) ---------- */
     function renderLiveView() {
       const wrap = document.getElementById('liveList');
       if (!liveSignals || liveSignals.length === 0) {
         wrap.innerHTML = `
           <div class="card" style="text-align: center; padding: 2rem;">
-            Aucun signal live en cache. Clique sur « 🔄 Scanner en direct » pour interroger Hacker News.
+            Aucun signal live en cache. Clique sur « 🔄 Actualiser le flux Live ».
           </div>
         `;
         return;
@@ -1639,7 +1655,7 @@
           <div class="card-meta">
             <div class="meta-badges">
               <span class="badge badge-cat">${esc(sig.source)}</span>
-              <span class="badge badge-maturity">${esc(sig.badge || 'Live')}</span>
+              <span class="badge badge-maturity">${esc(sig.badge || 'Paper / Tech')}</span>
             </div>
             <span style="font-size: 0.74rem; color: var(--text-muted);">📅 ${esc(sig.date || '')}</span>
           </div>
@@ -1650,19 +1666,19 @@
             </a>
           </h3>
 
-          ${sig.summary ? `<p style="font-size: 0.83rem; color: var(--text-secondary);">${esc(sig.summary)}</p>` : ''}
+          ${sig.summary ? `<p style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.55;">${esc(sig.summary)}</p>` : ''}
 
           <div class="card-actions" style="padding-top: 0.45rem;">
             <div class="action-group">
               <button class="btn-action btn-action-primary" onclick="copyLiveAnalysisPrompt(${i})">
-                🤖 Copier Prompt : « Comment l'adapter à mes projets ? »
+                🤖 Copier Prompt : « Décrypte cette méthode &amp; comment l'implanter chez moi »
               </button>
               <a class="btn-action" href="${esc(sig.url)}" target="_blank" rel="noopener">
-                🔗 Source ↗
+                📄 Ouvrir Paper / Source ↗
               </a>
               ${sig.discuss_url && sig.discuss_url !== sig.url ? `
                 <a class="btn-action" href="${esc(sig.discuss_url)}" target="_blank" rel="noopener">
-                  💬 Discussion HN ↗
+                  🔗 ArXiv / Discussion ↗
                 </a>
               ` : ''}
             </div>
@@ -1674,37 +1690,42 @@
     function copyLiveAnalysisPrompt(idx) {
       const sig = liveSignals[idx];
       if (!sig) return;
-      const prompt = `Analyse cette publication / actualité technique : "${sig.title}" (${sig.url}). Explique-moi en français clair ce qu'elle apporte techniquement et dis-moi concrètement si et comment je peux l'exploiter dans mes projets locaux (COCHIN·OS, BiblioOstéo, BiblioMarie, Archives des Internes, QUIZ Imagerie, Second Brain Obsidian ou PatrimoineOS).`;
-      copyText(prompt, 'Prompt d’analyse copié ! Colle-le dans T3 Code.');
+      const prompt = `Analyse en détail ce paper / cette méthode IA : "${sig.title}" (${sig.url}). 1) Explique-moi comment fonctionne la méthode algorithmique sous le capot, 2) Dis-moi si et comment on peut l'adapter concrètement dans l'un de mes projets locaux (COCHIN·OS, BiblioOstéo, BiblioMarie, Archives des Internes, QUIZ Imagerie, TPack DICOM Viewer, Second Brain Obsidian ou PatrimoineOS).`;
+      copyText(prompt, 'Prompt d’analyse scientifique copié ! Colle-le dans T3 Code.');
     }
+
+    const STRICT_AI_REGEX = /\b(ai|llm|llms|gpt|claude|gemini|deepseek|qwen|llama|mistral|transformer|transformers|diffusion|rag|graphrag|mcp|agent|agents|agentic|rlhf|grpo|lora|qlora|vlm|vision|neural|deep learning|machine learning|webgpu|onnx|mlx|cuda|tensor|pytorch|jax|embedding|embeddings|vector|ocr|tts|whisper|speech|benchmark|arxiv|inference|quantization|model|models)\b/i;
 
     async function fetchLiveHNFromBrowser(silent = false) {
       const qInput = document.getElementById('liveQueryInput');
-      const query = encodeURIComponent((qInput && qInput.value.trim()) || 'LLM OR MCP OR WebGPU');
-      if (!silent) showToast('Scan Hacker News en cours…');
+      const query = encodeURIComponent((qInput && qInput.value.trim()) || 'LLM');
+      if (!silent) showToast('Actualisation des papers & signaux IA…');
       try {
-        const res = await fetch(`https://hn.algolia.com/api/v1/search_by_date?query=${query}&tags=story&numericFilters=points%3E15&hitsPerPage=10`);
+        const res = await fetch(`https://hn.algolia.com/api/v1/search_by_date?query=${query}&restrictSearchableAttributes=title&tags=story&numericFilters=points%3E20&hitsPerPage=15`);
         if (res.ok) {
           const data = await res.json();
-          const hnItems = (data.hits || []).map(hit => ({
-            id: `hn-${hit.objectID}`,
-            source: 'Hacker News Live',
-            badge: `▲ ${hit.points || 0} pts · 💬 ${hit.num_comments || 0}`,
-            date: (hit.created_at || '').slice(0, 10),
-            title: hit.title || '',
-            url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
-            discuss_url: `https://news.ycombinator.com/item?id=${hit.objectID}`
-          }));
-          const arxivItems = (liveSignals || []).filter(x => String(x.id).startsWith('arxiv-'));
-          liveSignals = [...hnItems, ...arxivItems];
+          const hnItems = (data.hits || [])
+            .filter(hit => STRICT_AI_REGEX.test(hit.title || ''))
+            .map(hit => ({
+              id: `hn-${hit.objectID}`,
+              source: 'Hacker News AI',
+              badge: `▲ ${hit.points || 0} pts · 💬 ${hit.num_comments || 0}`,
+              date: (hit.created_at || '').slice(0, 10),
+              title: hit.title || '',
+              summary: "Discussion d'ingénierie IA et retours d'implémentation de la communauté.",
+              url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
+              discuss_url: `https://news.ycombinator.com/item?id=${hit.objectID}`
+            }));
+          const scientificPapers = (liveSignals || []).filter(x => String(x.id).startsWith('hf-') || String(x.id).startsWith('arxiv-'));
+          liveSignals = [...scientificPapers, ...hnItems];
           updateKPIs();
           if (currentMode === 'live') renderLiveView();
           const tsEl = document.getElementById('liveTimestamp');
-          if (tsEl) tsEl.textContent = `Dernière synchronisation directe : ${new Date().toLocaleTimeString('fr-FR')} (${liveSignals.length} signaux)`;
-          if (!silent) showToast(`✓ ${hnItems.length} signaux Hacker News actualisés`);
+          if (tsEl) tsEl.textContent = `Dernière synchronisation directe : ${new Date().toLocaleTimeString('fr-FR')} (${liveSignals.length} papers & signaux IA)`;
+          if (!silent) showToast(`✓ ${liveSignals.length} papers & signaux IA à jour`);
         }
       } catch (e) {
-        if (!silent) showToast('Mode hors-ligne : affichage des signaux en cache');
+        if (!silent) showToast('Mode hors-ligne : affichage des papers en cache');
       }
     }
 
