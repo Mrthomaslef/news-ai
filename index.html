@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#faf6ee" id="metaThemeColor" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="News AI" />
+  <title>News AI — Veille Technique &amp; Implantation Workflow (@Mrthomaslef)</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* Palette Parchemin / Ambre Chaud (inspirée de BiblioOstéo & BiblioMarie) */
+      --bg-page: #faf6ee;
+      --bg-card: #fffdf8;
+      --bg-subtle: #f3ecdc;
+      --bg-chip: #efe5cf;
+      --bg-callout: #fef7e0;
+      --bg-code: #1f1b16;
+      --text-code: #f8f1e5;
+      --text-main: #262017;
+      --text-secondary: #584c3b;
+      --text-muted: #877862;
+      --border: #e5dac3;
+      --border-strong: #d4c4a3;
+      --accent: #c97a10;
+      --accent-dark: #9e5d06;
+      --accent-soft: #faecc8;
+      --accent-text: #6e4000;
+      --green: #15803d;
+      --green-soft: #dcfce7;
+      --blue: #1d4ed8;
+      --blue-soft: #dbeafe;
+      --shadow: 0 2px 10px rgba(60, 45, 15, 0.05);
+      --shadow-lg: 0 12px 32px rgba(40, 28, 10, 0.14);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --serif: 'Source Serif 4', Georgia, serif;
+      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    html.dark {
+      --bg-page: #15130f;
+      --bg-card: #1f1c16;
+      --bg-subtle: #29241c;
+      --bg-chip: #332c21;
+      --bg-callout: #2a2213;
+      --bg-code: #100e0b;
+      --text-code: #fde68a;
+      --text-main: #f4efe6;
+      --text-secondary: #cbbfa8;
+      --text-muted: #938671;
+      --border: #362f23;
+      --border-strong: #4b4130;
+      --accent: #f59e0b;
+      --accent-dark: #d97706;
+      --accent-soft: rgba(245, 158, 11, 0.16);
+      --accent-text: #fcd34d;
+      --green: #4ade80;
+      --green-soft: rgba(74, 222, 128, 0.15);
+      --blue: #60a5fa;
+      --blue-soft: rgba(96, 165, 250, 0.15);
+      --shadow: 0 4px 18px rgba(0, 0, 0, 0.38);
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      overscroll-behavior-y: contain;
+      overflow-x: hidden;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--sans);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    body.locked {
+      overflow: hidden;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    /* ---------- Pull-to-Refresh (Standard obligatoire @Mrthomaslef) ---------- */
+    .ptr-bar {
+      height: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-text);
+      background: var(--bg-subtle);
+      border-bottom: 1px solid transparent;
+      transition: height 0.22s ease, opacity 0.2s ease;
+      opacity: 0;
+      user-select: none;
+    }
+    .ptr-bar.pulling {
+      transition: none;
+      border-bottom-color: var(--border);
+    }
+    .ptr-bar.refreshing {
+      height: 48px !important;
+      opacity: 1 !important;
+      border-bottom-color: var(--border);
+    }
+    .ptr-arrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      font-size: 0.92rem;
+      transition: transform 0.18s ease;
+    }
+    .ptr-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2.2px solid var(--border-strong);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      display: none;
+    }
+    .ptr-bar.refreshing .ptr-spinner {
+      display: inline-block;
+      animation: ptrSpin 0.65s linear infinite;
+    }
+    .ptr-bar.refreshing .ptr-arrow {
+      display: none;
+    }
+    @keyframes ptrSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ---------- Header & Navigation ---------- */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--border);
+      padding-top: env(safe-area-inset-top);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      padding: 0.75rem 0 0.6rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .brand-text h1 {
+      font-size: 1.06rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .brand-badge {
+      font-size: 0.66rem;
+      font-weight: 700;
+      padding: 0.12rem 0.45rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-text);
+      border: 1px solid var(--border-strong);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-text p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-shrink: 0;
+    }
+
+    .btn-top {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main);
+      border-radius: var(--radius-sm);
+      padding: 0.42rem 0.68rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      transition: all 0.15s ease;
+    }
+    .btn-top:hover {
+      border-color: var(--accent);
+    }
+    .btn-top:active {
+      transform: scale(0.97);
+    }
+    .btn-top-accent {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+
+    /* Mode Tabs (4 Vues Principales) */
+    .mode-tabs {
+      display: flex;
+      gap: 0.35rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 0.55rem;
+    }
+    .mode-tabs::-webkit-scrollbar { display: none; }
+
+    .mode-tab {
+      flex-shrink: 0;
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.81rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+    .mode-tab.active {
+      background: var(--text-main);
+      color: var(--bg-page);
+      border-color: var(--text-main);
+    }
+    .mode-tab .count-pill {
+      font-size: 0.68rem;
+      padding: 0.05rem 0.38rem;
+      border-radius: 999px;
+      background: rgba(128, 128, 128, 0.2);
+    }
+
+    /* Barre de recherche & Filtres (Vue Flux) */
+    .sub-toolbar {
+      border-top: 1px solid var(--border);
+      padding: 0.6rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.56rem 2rem 0.56rem 2.15rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+    .search-icon {
+      position: absolute;
+      left: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.85rem;
+      opacity: 0.65;
+      pointer-events: none;
+    }
+    .clear-btn {
+      position: absolute;
+      right: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: none;
+      font-size: 0.9rem;
+    }
+
+    .sort-select {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      padding: 0.54rem 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .pills-scroll {
+      display: flex;
+      gap: 0.4rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 0.1rem;
+    }
+    .pills-scroll::-webkit-scrollbar { display: none; }
+
+    .pill {
+      flex-shrink: 0;
+      padding: 0.34rem 0.72rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    html.dark .pill.active {
+      color: #15130f;
+    }
+
+    .pill-project {
+      font-size: 0.73rem;
+      background: var(--bg-subtle);
+    }
+    .pill-project.active {
+      background: var(--accent-text);
+      border-color: var(--accent-text);
+      color: #fff;
+    }
+    html.dark .pill-project.active {
+      background: var(--accent);
+      color: #15130f;
+    }
+
+    /* ---------- Contenu Principal ---------- */
+    .main {
+      padding: 1rem 0 4rem;
+    }
+
+    /* Bandeau Résumé Écosystème */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 640px) {
+      .kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.68rem 0.8rem;
+      box-shadow: var(--shadow);
+    }
+    .kpi-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .kpi-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 0.1rem;
+    }
+    .kpi-sub {
+      font-size: 0.72rem;
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+
+    .count-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      padding: 0 0.15rem;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    /* ---------- Cartes News AI ---------- */
+    .cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.95rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+    }
+    .card.status-done {
+      border-left: 4px solid var(--green);
+    }
+    .card.status-doing {
+      border-left: 4px solid var(--accent);
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-badges {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.71rem;
+      font-weight: 700;
+      padding: 0.18rem 0.55rem;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .badge-cat {
+      background: var(--accent-soft);
+      color: var(--accent-text);
+    }
+    .badge-maturity {
+      background: var(--bg-chip);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+    .badge-setup {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .card-title {
+      font-family: var(--serif);
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.32;
+      cursor: pointer;
+    }
+    .card-title:hover {
+      color: var(--accent);
+    }
+
+    .card-summary {
+      font-size: 0.91rem;
+      color: var(--text-secondary);
+      line-height: 1.58;
+    }
+
+    /* Encadré Workflow Thomas */
+    .workflow-box {
+      background: var(--bg-callout);
+      border-left: 3.5px solid var(--accent);
+      padding: 0.68rem 0.85rem;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 0.42rem;
+    }
+    .workflow-box-title {
+      font-weight: 700;
+      color: var(--accent-text);
+      font-size: 0.79rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Chips des projets de Thomas concernés */
+    .project-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.38rem;
+    }
+    .project-chip {
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+    }
+    .project-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+
+    /* Bloc Prompt T3 Code prêt à copier */
+    .prompt-preview {
+      background: var(--bg-code);
+      color: var(--text-code);
+      border-radius: var(--radius-sm);
+      padding: 0.68rem 0.85rem;
+      font-family: var(--mono);
+      font-size: 0.77rem;
+      line-height: 1.5;
+      position: relative;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .prompt-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+      font-family: var(--sans);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fbbf24;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding-top: 0.2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 0.42rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      border-radius: 8px;
+      padding: 0.44rem 0.75rem;
+      font-size: 0.79rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn-action:hover {
+      border-color: var(--accent);
+    }
+    .btn-action-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    html.dark .btn-action-primary {
+      color: #15130f;
+      font-weight: 700;
+    }
+
+    .status-select {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 0.38rem 0.55rem;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .fav-btn {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 0.38rem 0.58rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .fav-btn.on {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+
+    /* ---------- Vue 2 : Audit de Mes Projets ---------- */
+    .projects-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .project-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .project-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .project-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .project-emoji {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    .project-path {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: var(--bg-subtle);
+      padding: 0.18rem 0.5rem;
+      border-radius: 5px;
+      display: inline-block;
+      margin-top: 0.2rem;
+      word-break: break-all;
+    }
+
+    .opp-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .opp-item {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .opp-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .opp-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* ---------- Vue 3 : Radar Live Web ---------- */
+    .live-header-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    /* ---------- Vue 4 : Mon Harnais IA ---------- */
+    .harness-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.9rem;
+    }
+    @media (max-width: 700px) {
+      .harness-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .harness-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .harness-card h3 {
+      font-size: 0.98rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .harness-list {
+      padding-left: 1.1rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    /* ---------- Tiroir de Lecture Complet (Reader Drawer) ---------- */
+    .reader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-page);
+      z-index: 60;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+      padding-bottom: 4rem;
+    }
+    .reader.open {
+      transform: none;
+    }
+
+    .rbar {
+      position: sticky;
+      top: 0;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+      padding-top: env(safe-area-inset-top);
+    }
+    .rbar-inner {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .back-btn {
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      border-radius: 8px;
+      padding: 0.38rem 0.75rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .progress-line {
+      display: block;
+      height: 2.5px;
+      background: var(--accent);
+      width: 0;
+    }
+
+    .doc {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 1.4rem 1rem 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .doc-title {
+      font-family: var(--serif);
+      font-size: 1.55rem;
+      font-weight: 700;
+      line-height: 1.26;
+    }
+    .doc-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .doc-block h3 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent-text);
+      font-weight: 800;
+    }
+    .doc-list {
+      padding-left: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      font-size: 0.91rem;
+      color: var(--text-secondary);
+    }
+
+    /* ---------- Modale Ajout de Note / Idée IA ---------- */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.55);
+      z-index: 80;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-sheet {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      border-radius: 18px 18px 0 0;
+      width: 100%;
+      max-width: 640px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 1.25rem 1.25rem calc(env(safe-area-inset-bottom) + 1.25rem);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .field-input, .field-textarea {
+      width: 100%;
+      padding: 0.62rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .field-textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    /* ---------- Toast ---------- */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 22px);
+      transform: translate(-50%, 16px);
+      opacity: 0;
+      background: var(--text-main);
+      color: var(--bg-page);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.6rem 1.05rem;
+      border-radius: 999px;
+      z-index: 120;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      box-shadow: var(--shadow-lg);
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  </style>
+</head>
+<body>
+  <!-- Barre Pull-to-Refresh (Tactile + Souris) -->
+  <div class="ptr-bar" id="ptrBar">
+    <span class="ptr-arrow" id="ptrArrow">↓</span>
+    <span class="ptr-spinner" id="ptrSpinner"></span>
+    <span id="ptrText">Tirer pour actualiser</span>
+  </div>
+
+  <!-- En-tête Sticky -->
+  <header class="header">
+    <div class="container">
+      <div class="header-top">
+        <div class="brand">
+          <img src="assets/icon.svg" alt="News AI" class="brand-icon" />
+          <div class="brand-text">
+            <h1>
+              News AI
+              <span class="brand-badge">Workflow @Mrthomaslef</span>
+            </h1>
+            <p>Avancées techniques IA &amp; implantation directe dans tes 24 projets</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-top" onclick="openAddModal()" title="Ajouter une piste IA personnelle">
+            ➕ Piste
+          </button>
+          <button class="btn-top btn-top-accent" onclick="exportAllObsidian()" title="Exporter le playbook vers ton Second Brain Obsidian">
+            🧠 Obsidian
+          </button>
+          <button class="btn-top" onclick="toggleDarkMode()" id="themeBtn" aria-label="Mode sombre">
+            🌙
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 Onglets de Navigation Principale -->
+      <nav class="mode-tabs" id="modeTabs" aria-label="Modes">
+        <button class="mode-tab active" data-mode="feed" onclick="switchMode('feed')">
+          📰 Avancées &amp; Workflow <span class="count-pill" id="countFeed">11</span>
+        </button>
+        <button class="mode-tab" data-mode="projects" onclick="switchMode('projects')">
+          🗺️ Audit de Mes Projets <span class="count-pill" id="countProjects">12</span>
+        </button>
+        <button class="mode-tab" data-mode="live" onclick="switchMode('live')">
+          ⚡ Radar Live (HN &amp; ArXiv) <span class="count-pill" id="countLive">14</span>
+        </button>
+        <button class="mode-tab" data-mode="harness" onclick="switchMode('harness')">
+          🛠️ Mon Harnais T3 Code
+        </button>
+      </nav>
+
+      <!-- Barre de Recherche & Filtres (visible en mode Flux) -->
+      <div class="sub-toolbar" id="feedToolbar">
+        <div class="search-row">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input
+              type="search"
+              id="searchInput"
+              class="search-input"
+              placeholder="Rechercher (MCP, Zotero, PDF.js, DICOM, CR-type, SQLite, Council, WebGPU…)"
+              oninput="onSearchInput()"
+            />
+            <button class="clear-btn" id="clearSearchBtn" onclick="clearSearch()">✕</button>
+          </div>
+          <select class="sort-select" id="sortSelect" onchange="renderActiveView()" aria-label="Trier">
+            <option value="impact">🔥 Impact &amp; Quick Wins</option>
+            <option value="date">📅 Plus récents</option>
+            <option value="todo">🎯 À tester en priorité</option>
+          </select>
+        </div>
+
+        <!-- Filtres Rubriques Techniques -->
+        <div class="pills-scroll" id="categoryPills"></div>
+
+        <!-- Filtres par Projet de Thomas -->
+        <div class="pills-scroll" id="projectPills"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenu Principal -->
+  <main class="main container">
+    <!-- Bandeau KPI Écosystème -->
+    <section class="kpi-strip" id="kpiStrip">
+      <div class="kpi-card">
+        <div class="kpi-label">Projets Analysés</div>
+        <div class="kpi-val" id="kpiProjectsCount">24 apps</div>
+        <div class="kpi-sub">Cochin • Biblio • Finance • Famille</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Playbooks Prêts</div>
+        <div class="kpi-val" id="kpiPlaybooksCount">11 guides</div>
+        <div class="kpi-sub">Avec prompts T3 Code en 1 clic</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Suivi Implantation</div>
+        <div class="kpi-val" id="kpiDoneCount">0 / 11</div>
+        <div class="kpi-sub" id="kpiDoingSub">Clique sur un statut pour suivre</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Harnais Actif</div>
+        <div class="kpi-val">Argon + Opus</div>
+        <div class="kpi-sub">92.8% Cache Hit • Skill Council</div>
+      </div>
+    </section>
+
+    <!-- Vue 1 : Flux des Avancées & Implantations -->
+    <section id="viewFeed">
+      <div class="count-bar">
+        <span id="resultsCount">Chargement…</span>
+        <span style="font-weight: 600; color: var(--accent-text);">
+          💡 Astuce : clique sur « 📋 Copier Prompt T3 Code » puis colle-le directement dans ton chat
+        </span>
+      </div>
+      <div class="cards-list" id="newsList"></div>
+    </section>
+
+    <!-- Vue 2 : Audit & Radar de Mes Projets -->
+    <section id="viewProjects" style="display: none;">
+      <div class="count-bar">
+        <span>Cartographie complète de tes dépôts locaux (`/Users/thomaslefevre/.t3/projects` &amp; `Documents`)</span>
+        <span>Chaque opportunité inclut un prompt T3 Code sur-mesure</span>
+      </div>
+      <div class="projects-grid" id="projectsList"></div>
+    </section>
+
+    <!-- Vue 3 : Radar Live Web (Hacker News & ArXiv Imagerie/IA) -->
+    <section id="viewLive" style="display: none;">
+      <div class="live-header-box">
+        <div>
+          <h2 style="font-size: 1rem; font-weight: 800;">⚡ Signaux Techniques en Direct (Hacker News Algolia &amp; ArXiv Imagerie/Agents)</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted);" id="liveTimestamp">
+            Flux temps réel combinant les papers ArXiv (`eess.IV`, `cs.CV`, `cs.AI`) et les discussions techniques HN.
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+          <input
+            type="search"
+            id="liveQueryInput"
+            class="field-input"
+            style="width: 190px; padding: 0.42rem 0.65rem; font-size: 0.8rem;"
+            value="LLM OR MCP OR WebGPU"
+            placeholder="Thème HN (ex: Claude, DICOM…)"
+          />
+          <button class="btn-action btn-action-primary" onclick="fetchLiveHNFromBrowser()">
+            🔄 Scanner en direct
+          </button>
+        </div>
+      </div>
+      <div class="cards-list" id="liveList"></div>
+    </section>
+
+    <!-- Vue 4 : Mon Harnais IA & Playbook T3 Code -->
+    <section id="viewHarness" style="display: none;">
+      <div class="harness-grid" id="harnessContent"></div>
+    </section>
+  </main>
+
+  <!-- Tiroir de Lecture Complet (Article + Plan d'Implantation + Prompt T3 Code) -->
+  <aside class="reader" id="reader" aria-hidden="true">
+    <div class="rbar">
+      <div class="rbar-inner">
+        <button class="back-btn" onclick="closeReader()">
+          ← Retour au flux
+        </button>
+        <div style="display: flex; gap: 0.4rem;">
+          <button class="btn-top" id="readerExportObsidianBtn">
+            🧠 Note Obsidian
+          </button>
+          <button class="btn-top btn-top-accent" id="readerCopyPromptBtn">
+            📋 Copier Prompt T3
+          </button>
+        </div>
+      </div>
+      <span class="progress-line" id="readerProgress"></span>
+    </div>
+    <div class="doc" id="readerDoc"></div>
+  </aside>
+
+  <!-- Modale : Ajouter une piste IA personnelle -->
+  <div class="modal-backdrop" id="addModal" onclick="if(event.target===this) closeAddModal()">
+    <div class="modal-sheet">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 1.05rem; font-weight: 800;">➕ Ajouter une piste IA / Idée de Workflow</h3>
+        <button class="btn-top" onclick="closeAddModal()">Fermer</button>
+      </div>
+      <p style="font-size: 0.82rem; color: var(--text-secondary);">
+        Note une avancée technique ou une idée d'implantation pour l'un de tes projets : elle sera sauvegardée sur ton appareil avec un prompt T3 Code généré automatiquement.
+      </p>
+      <input id="customTitle" class="field-input" placeholder="Titre de l'avancée ou de l'idée (ex: Mode dictée vocale pour BiblioOstéo)" />
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+        <select id="customCat" class="field-input"></select>
+        <select id="customProj" class="field-input"></select>
+      </div>
+      <textarea id="customSummary" class="field-textarea" placeholder="Ce que ça apporte techniquement et comment tu veux l'utiliser dans ton workflow…"></textarea>
+      <textarea id="customPrompt" class="field-textarea" placeholder="Prompt T3 Code (optionnel — sera auto-généré si laissé vide)"></textarea>
+      <button class="btn-action btn-action-primary" style="justify-content: center; padding: 0.7rem;" onclick="saveCustomItem()">
+        ✨ Enregistrer dans mon News AI
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Base de connaissances embarquée -->
+  <script src="data/embedded_data.js"></script>
+
+  <script>
+    const STORAGE_STATUS_KEY = 'news_ai_workflow_status_v1';
+    const STORAGE_FAV_KEY = 'news_ai_favorites_v1';
+    const STORAGE_CUSTOM_KEY = 'news_ai_custom_items_v1';
+    const STORAGE_THEME_KEY = 'news_ai_theme_v1';
+
+    let DATA = window.NEWS_AI_DATA || { categories: [], projects: [], news: [], liveSignals: [] };
+    let categories = DATA.categories || [];
+    let projects = DATA.projects || [];
+    let baseNews = DATA.news || [];
+    let liveSignals = DATA.liveSignals || [];
+
+    let statusMap = JSON.parse(localStorage.getItem(STORAGE_STATUS_KEY) || '{}');
+    let favSet = new Set(JSON.parse(localStorage.getItem(STORAGE_FAV_KEY) || '[]'));
+    let customItems = JSON.parse(localStorage.getItem(STORAGE_CUSTOM_KEY) || '[]');
+
+    let currentMode = 'feed';
+    let currentCategory = 'all';
+    let currentProject = 'all';
+    let currentReaderId = null;
+
+    function getAllNews() {
+      return [...customItems, ...baseNews];
+    }
+
+    function esc(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      if (navigator.vibrate) navigator.vibrate(10);
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    async function copyText(text, label = 'Prompt T3 Code copié dans le presse-papiers !') {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('✓ ' + label);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showToast('✓ ' + label);
+      }
+    }
+
+    /* ---------- Thème Clair / Sombre ---------- */
+    function initTheme() {
+      const saved = localStorage.getItem(STORAGE_THEME_KEY);
+      if (saved === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+      updateThemeUI();
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem(STORAGE_THEME_KEY, isDark ? 'dark' : 'light');
+      updateThemeUI();
+    }
+
+    function updateThemeUI() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const btn = document.getElementById('themeBtn');
+      const meta = document.getElementById('metaThemeColor');
+      if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+      if (meta) meta.setAttribute('content', isDark ? '#15130f' : '#faf6ee');
+    }
+
+    /* ---------- Navigation entre les 4 Vues ---------- */
+    function switchMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      document.getElementById('feedToolbar').style.display = mode === 'feed' ? 'flex' : 'none';
+      document.getElementById('viewFeed').style.display = mode === 'feed' ? 'block' : 'none';
+      document.getElementById('viewProjects').style.display = mode === 'projects' ? 'block' : 'none';
+      document.getElementById('viewLive').style.display = mode === 'live' ? 'block' : 'none';
+      document.getElementById('viewHarness').style.display = mode === 'harness' ? 'block' : 'none';
+      renderActiveView();
+    }
+
+    function renderActiveView() {
+      updateKPIs();
+      if (currentMode === 'feed') {
+        renderCategoryPills();
+        renderProjectPills();
+        renderNewsList();
+      } else if (currentMode === 'projects') {
+        renderProjectsView();
+      } else if (currentMode === 'live') {
+        renderLiveView();
+      } else if (currentMode === 'harness') {
+        renderHarnessView();
+      }
+    }
+
+    function updateKPIs() {
+      const all = getAllNews();
+      let done = 0;
+      let doing = 0;
+      all.forEach(item => {
+        const st = statusMap[item.id] || 'todo';
+        if (st === 'done') done++;
+        if (st === 'doing') doing++;
+      });
+      document.getElementById('countFeed').textContent = all.length;
+      document.getElementById('countProjects').textContent = projects.length;
+      document.getElementById('countLive').textContent = liveSignals.length;
+      document.getElementById('kpiPlaybooksCount').textContent = `${all.length} guides`;
+      document.getElementById('kpiDoneCount').textContent = `${done} / ${all.length} implantés`;
+      document.getElementById('kpiDoingSub').textContent = doing > 0
+        ? `${doing} en cours d'implantation • ${favSet.size} favori(s)`
+        : `${favSet.size} favori(s) • Prêt à copier dans T3 Code`;
+    }
+
+    /* ---------- Filtres Rubriques & Projets ---------- */
+    function renderCategoryPills() {
+      const all = getAllNews();
+      const wrap = document.getElementById('categoryPills');
+      let html = `
+        <button class="pill ${currentCategory === 'all' ? 'active' : ''}" onclick="setCategory('all')">
+          Toutes (${all.length})
+        </button>
+        <button class="pill ${currentCategory === 'quickwin' ? 'active' : ''}" onclick="setCategory('quickwin')">
+          ⚡ Quick Wins
+        </button>
+        <button class="pill ${currentCategory === 'fav' ? 'active' : ''}" onclick="setCategory('fav')">
+          ★ Favoris (${favSet.size})
+        </button>
+      `;
+      categories.forEach(c => {
+        const n = all.filter(i => i.category_id === c.id).length;
+        html += `
+          <button class="pill ${currentCategory === c.id ? 'active' : ''}" onclick="setCategory('${c.id}')">
+            ${esc(c.short)} (${n})
+          </button>
+        `;
+      });
+      wrap.innerHTML = html;
+    }
+
+    function renderProjectPills() {
+      const wrap = document.getElementById('projectPills');
+      let html = `
+        <button class="pill pill-project ${currentProject === 'all' ? 'active' : ''}" onclick="setProjectFilter('all')">
+          🎯 Tous mes projets
+        </button>
+      `;
+      projects.forEach(p => {
+        const shortName = p.title.split('—')[0].trim();
+        html += `
+          <button class="pill pill-project ${currentProject === p.id ? 'active' : ''}" onclick="setProjectFilter('${p.id}')">
+            ${p.emoji} ${esc(shortName)}
+          </button>
+        `;
+      });
+      wrap.innerHTML = html;
+    }
+
+    function setCategory(id) {
+      currentCategory = id;
+      renderCategoryPills();
+      renderNewsList();
+    }
+
+    function setProjectFilter(id) {
+      currentProject = id;
+      if (currentMode !== 'feed') switchMode('feed');
+      renderProjectPills();
+      renderNewsList();
+    }
+
+    function onSearchInput() {
+      const v = document.getElementById('searchInput').value;
+      document.getElementById('clearSearchBtn').style.display = v ? 'block' : 'none';
+      renderNewsList();
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearchBtn').style.display = 'none';
+      renderNewsList();
+    }
+
+    function setStatus(id, status) {
+      statusMap[id] = status;
+      localStorage.setItem(STORAGE_STATUS_KEY, JSON.stringify(statusMap));
+      updateKPIs();
+      renderNewsList();
+      const labels = { todo: 'À tester', doing: 'En cours', done: 'Implanté ✓' };
+      showToast(`Statut mis à jour : ${labels[status] || status}`);
+    }
+
+    function toggleFav(id) {
+      if (favSet.has(id)) favSet.delete(id);
+      else favSet.add(id);
+      localStorage.setItem(STORAGE_FAV_KEY, JSON.stringify([...favSet]));
+      updateKPIs();
+      renderCategoryPills();
+      renderNewsList();
+    }
+
+    /* ---------- Vue 1 : Rendu des Fiches News AI ---------- */
+    function renderNewsList() {
+      const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const sortBy = document.getElementById('sortSelect').value;
+      const all = getAllNews();
+
+      let filtered = all.filter(item => {
+        if (currentCategory === 'fav' && !favSet.has(item.id)) return false;
+        if (currentCategory === 'quickwin' && !(item.maturity || '').toLowerCase().includes('quick')) return false;
+        if (currentCategory !== 'all' && currentCategory !== 'fav' && currentCategory !== 'quickwin' && item.category_id !== currentCategory) {
+          return false;
+        }
+        if (currentProject !== 'all' && !(item.target_projects || []).includes(currentProject)) {
+          return false;
+        }
+        if (q) {
+          const hay = [
+            item.title_fr, item.summary_fr, item.technical_breakthrough_fr,
+            item.workflow_how_to_fr, item.t3_prompt, item.source,
+            (item.key_points_fr || []).join(' '),
+            (item.target_projects || []).join(' ')
+          ].join(' ').toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      if (sortBy === 'date') {
+        filtered.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+      } else if (sortBy === 'todo') {
+        const order = { doing: 0, todo: 1, done: 2 };
+        filtered.sort((a, b) => (order[statusMap[a.id] || 'todo'] ?? 1) - (order[statusMap[b.id] || 'todo'] ?? 1));
+      }
+
+      document.getElementById('resultsCount').textContent =
+        `${filtered.length} avancée${filtered.length > 1 ? 's' : ''} technique${filtered.length > 1 ? 's' : ''} sélectionnée${filtered.length > 1 ? 's' : ''}`;
+
+      const listEl = document.getElementById('newsList');
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="card" style="text-align: center; padding: 2.2rem 1rem; color: var(--text-muted);">
+            Aucune fiche ne correspond à ce filtre. <br/>
+            <button class="btn-action" style="margin: 0.75rem auto 0;" onclick="setCategory('all'); setProjectFilter('all'); clearSearch();">
+              Réinitialiser les filtres
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(item => {
+        const catObj = categories.find(c => c.id === item.category_id) || { short: '🤖 IA' };
+        const st = statusMap[item.id] || 'todo';
+        const isFav = favSet.has(item.id);
+        const targetChips = (item.target_projects || []).map(pid => {
+          const p = projects.find(x => x.id === pid);
+          if (!p) return '';
+          const shortName = p.title.split('—')[0].trim();
+          return `<button class="project-chip" onclick="setProjectFilter('${p.id}')" title="Filtrer sur ${esc(p.title)}">${p.emoji} ${esc(shortName)}</button>`;
+        }).join('');
+
+        return `
+          <article class="card status-${st}">
+            <div class="card-meta">
+              <div class="meta-badges">
+                <span class="badge badge-cat">${esc(catObj.short)}</span>
+                <span class="badge badge-maturity">${esc(item.maturity || '⚡ Workflow')}</span>
+                <span class="badge badge-setup">⏱ ${esc(item.setup_time || '15 min')}</span>
+                <span class="badge badge-setup">💎 ${esc(item.cost_badge || 'Local')}</span>
+              </div>
+              <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 500;">
+                ${esc(item.date_fr || item.date)} • ${esc(item.source)}
+              </span>
+            </div>
+
+            <h2 class="card-title" onclick="openReader('${item.id}')">${esc(item.title_fr)}</h2>
+
+            <p class="card-summary">${esc(item.summary_fr)}</p>
+
+            <div class="workflow-box">
+              <div class="workflow-box-title">🎯 Comment l'implanter dans ton workflow :</div>
+              <div>${esc(item.workflow_how_to_fr)}</div>
+              ${targetChips ? `<div class="project-chips" style="margin-top: 0.25rem;">${targetChips}</div>` : ''}
+            </div>
+
+            <div class="prompt-preview">
+              <div class="prompt-preview-header">
+                <span>🚀 Prompt T3 Code prêt à coller</span>
+                <button class="btn-action btn-action-primary" style="padding: 0.22rem 0.55rem; font-size: 0.71rem;" onclick="copyPromptById('${item.id}')">
+                  📋 Copier le prompt
+                </button>
+              </div>
+              <div>${esc(item.t3_prompt)}</div>
+            </div>
+
+            <div class="card-actions">
+              <div class="action-group">
+                <button class="btn-action btn-action-primary" onclick="openReader('${item.id}')">
+                  📖 Fiche complète &amp; Étapes
+                </button>
+                <button class="btn-action" onclick="copyPromptById('${item.id}')">
+                  📋 Prompt T3 Code
+                </button>
+                <button class="btn-action" onclick="exportSingleObsidian('${item.id}')" title="Copier au format note Obsidian pour 2nd brain">
+                  🧠 + Obsidian
+                </button>
+              </div>
+
+              <div class="action-group">
+                <select class="status-select" onchange="setStatus('${item.id}', this.value)" aria-label="Statut d'implantation">
+                  <option value="todo" ${st === 'todo' ? 'selected' : ''}>🎯 À tester</option>
+                  <option value="doing" ${st === 'doing' ? 'selected' : ''}>🚧 En cours</option>
+                  <option value="done" ${st === 'done' ? 'selected' : ''}>✅ Implanté</option>
+                </select>
+                <button class="fav-btn ${isFav ? 'on' : ''}" onclick="toggleFav('${item.id}')" title="Favori">
+                  ${isFav ? '★' : '☆'}
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function copyPromptById(id) {
+      const item = getAllNews().find(x => x.id === id);
+      if (item && item.t3_prompt) {
+        copyText(item.t3_prompt, 'Prompt T3 Code copié ! Colle-le dans ton thread.');
+      }
+    }
+
+    /* ---------- Vue 2 : Audit & Radar de Mes Projets ---------- */
+    function renderProjectsView() {
+      const wrap = document.getElementById('projectsList');
+      const allNews = getAllNews();
+      wrap.innerHTML = projects.map(p => {
+        const relatedNews = allNews.filter(n => (n.target_projects || []).includes(p.id));
+        const oppsHtml = (p.aiOpportunities || []).map((opp, idx) => `
+          <div class="opp-item">
+            <div class="opp-head">
+              <span class="opp-title">✨ ${esc(opp.title)}</span>
+              <span class="badge badge-cat">${esc(opp.impact)}</span>
+            </div>
+            <p style="font-size: 0.83rem; color: var(--text-secondary);">${esc(opp.detail)}</p>
+            <div class="prompt-preview" style="margin-top: 0.15rem;">
+              <div class="prompt-preview-header">
+                <span>Prompt d'implantation directe (${esc(p.title.split('—')[0].trim())})</span>
+                <button class="btn-action btn-action-primary" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;" onclick="copyProjectOppPrompt('${p.id}', ${idx})">
+                  📋 Copier Prompt T3
+                </button>
+              </div>
+              <div>${esc(opp.prompt)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        const relatedBadges = relatedNews.map(n => `
+          <button class="project-chip" onclick="openReader('${n.id}')">
+            📰 ${esc(n.title_fr.slice(0, 52))}…
+          </button>
+        `).join('');
+
+        return `
+          <article class="project-card">
+            <div class="project-header">
+              <div class="project-title-wrap">
+                <div class="project-emoji">${p.emoji}</div>
+                <div>
+                  <span class="badge badge-setup" style="margin-bottom: 0.2rem;">${esc(p.category)}</span>
+                  <h2 style="font-size: 1.05rem; font-weight: 800;">${esc(p.title)}</h2>
+                  <div class="project-path">📁 ${esc(p.path)}</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                ${p.prodUrl ? `<a class="btn-action" href="${esc(p.prodUrl)}" target="_blank" rel="noopener">🌐 Ouvrir App ↗</a>` : ''}
+                ${p.githubUrl ? `<a class="btn-action" href="${esc(p.githubUrl)}" target="_blank" rel="noopener">💻 GitHub ↗</a>` : ''}
+                <button class="btn-action btn-action-primary" onclick="setProjectFilter('${p.id}')">
+                  🔍 Voir les ${relatedNews.length} playbooks liés
+                </button>
+              </div>
+            </div>
+
+            <p style="font-size: 0.86rem; color: var(--text-secondary);">
+              <strong>Stack détectée :</strong> ${esc(p.stack)}<br/>
+              ${esc(p.summary)}
+            </p>
+
+            <div class="opp-list">
+              <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent-text);">
+                🚀 Évolutions IA sur-mesure prêtes à implanter :
+              </div>
+              ${oppsHtml}
+            </div>
+
+            ${relatedBadges ? `
+              <div style="border-top: 1px solid var(--border); padding-top: 0.55rem;">
+                <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                  Fiches techniques News AI applicables à ce projet :
+                </span>
+                <div class="project-chips">${relatedBadges}</div>
+              </div>
+            ` : ''}
+          </article>
+        `;
+      }).join('');
+    }
+
+    function copyProjectOppPrompt(projId, oppIdx) {
+      const p = projects.find(x => x.id === projId);
+      const opp = p && p.aiOpportunities && p.aiOpportunities[oppIdx];
+      if (opp && opp.prompt) {
+        copyText(opp.prompt, `Prompt pour ${p.title.split('—')[0].trim()} copié !`);
+      }
+    }
+
+    /* ---------- Vue 3 : Radar Live Web (HN & ArXiv) ---------- */
+    function renderLiveView() {
+      const wrap = document.getElementById('liveList');
+      if (!liveSignals || liveSignals.length === 0) {
+        wrap.innerHTML = `
+          <div class="card" style="text-align: center; padding: 2rem;">
+            Aucun signal live en cache. Clique sur « 🔄 Scanner en direct » pour interroger Hacker News.
+          </div>
+        `;
+        return;
+      }
+
+      wrap.innerHTML = liveSignals.map((sig, i) => `
+        <article class="card" style="padding: 0.95rem 1.1rem; gap: 0.55rem;">
+          <div class="card-meta">
+            <div class="meta-badges">
+              <span class="badge badge-cat">${esc(sig.source)}</span>
+              <span class="badge badge-maturity">${esc(sig.badge || 'Live')}</span>
+            </div>
+            <span style="font-size: 0.74rem; color: var(--text-muted);">📅 ${esc(sig.date || '')}</span>
+          </div>
+
+          <h3 style="font-size: 1rem; font-weight: 700; line-height: 1.35;">
+            <a href="${esc(sig.url)}" target="_blank" rel="noopener" style="text-decoration: none; color: inherit;">
+              ${esc(sig.title)} ↗
+            </a>
+          </h3>
+
+          ${sig.summary ? `<p style="font-size: 0.83rem; color: var(--text-secondary);">${esc(sig.summary)}</p>` : ''}
+
+          <div class="card-actions" style="padding-top: 0.45rem;">
+            <div class="action-group">
+              <button class="btn-action btn-action-primary" onclick="copyLiveAnalysisPrompt(${i})">
+                🤖 Copier Prompt : « Comment l'adapter à mes projets ? »
+              </button>
+              <a class="btn-action" href="${esc(sig.url)}" target="_blank" rel="noopener">
+                🔗 Source ↗
+              </a>
+              ${sig.discuss_url && sig.discuss_url !== sig.url ? `
+                <a class="btn-action" href="${esc(sig.discuss_url)}" target="_blank" rel="noopener">
+                  💬 Discussion HN ↗
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function copyLiveAnalysisPrompt(idx) {
+      const sig = liveSignals[idx];
+      if (!sig) return;
+      const prompt = `Analyse cette publication / actualité technique : "${sig.title}" (${sig.url}). Explique-moi en français clair ce qu'elle apporte techniquement et dis-moi concrètement si et comment je peux l'exploiter dans mes projets locaux (COCHIN·OS, BiblioOstéo, BiblioMarie, Archives des Internes, QUIZ Imagerie, Second Brain Obsidian ou PatrimoineOS).`;
+      copyText(prompt, 'Prompt d’analyse copié ! Colle-le dans T3 Code.');
+    }
+
+    async function fetchLiveHNFromBrowser(silent = false) {
+      const qInput = document.getElementById('liveQueryInput');
+      const query = encodeURIComponent((qInput && qInput.value.trim()) || 'LLM OR MCP OR WebGPU');
+      if (!silent) showToast('Scan Hacker News en cours…');
+      try {
+        const res = await fetch(`https://hn.algolia.com/api/v1/search_by_date?query=${query}&tags=story&numericFilters=points%3E15&hitsPerPage=10`);
+        if (res.ok) {
+          const data = await res.json();
+          const hnItems = (data.hits || []).map(hit => ({
+            id: `hn-${hit.objectID}`,
+            source: 'Hacker News Live',
+            badge: `▲ ${hit.points || 0} pts · 💬 ${hit.num_comments || 0}`,
+            date: (hit.created_at || '').slice(0, 10),
+            title: hit.title || '',
+            url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
+            discuss_url: `https://news.ycombinator.com/item?id=${hit.objectID}`
+          }));
+          const arxivItems = (liveSignals || []).filter(x => String(x.id).startsWith('arxiv-'));
+          liveSignals = [...hnItems, ...arxivItems];
+          updateKPIs();
+          if (currentMode === 'live') renderLiveView();
+          const tsEl = document.getElementById('liveTimestamp');
+          if (tsEl) tsEl.textContent = `Dernière synchronisation directe : ${new Date().toLocaleTimeString('fr-FR')} (${liveSignals.length} signaux)`;
+          if (!silent) showToast(`✓ ${hnItems.length} signaux Hacker News actualisés`);
+        }
+      } catch (e) {
+        if (!silent) showToast('Mode hors-ligne : affichage des signaux en cache');
+      }
+    }
+
+    /* ---------- Vue 4 : Mon Harnais IA (Playbook T3 Code) ---------- */
+    function renderHarnessView() {
+      const wrap = document.getElementById('harnessContent');
+      wrap.innerHTML = `
+        <div class="harness-card">
+          <h3>⚡ 1. Routage Optimal de tes Modèles (Ultra + Claude Pro)</h3>
+          <ul class="harness-list">
+            <li><strong>Gemini 4 Argon (High / Medium)</strong> : Ton modèle principal dans T3 Code (94% de quota disponible, fenêtre de contexte massive et 92.8% de taux de cache sur ton compte). Idéal pour lire plusieurs projets simultanément, générer des PWA complètes et manipuler de gros JSON (<code>BiblioOstéo</code>, <code>Guide Infiltrations</code>).</li>
+            <li><strong>Gemini 3.8 Flash</strong> : Ultra-rapide et économique pour les retouches CSS, corrections de texte ou vérifications rapides.</li>
+            <li><strong>Claude Opus 5.5 / Sonnet (via Council ou délégation)</strong> : Idéal en binôme via le skill <code>council</code> pour challenger l'architecture, relire une synthèse clinique délicate ou auditer une logique métier complexe.</li>
+          </ul>
+        </div>
+
+        <div class="harness-card">
+          <h3>🏛️ 2. Quand déclencher ton Skill « Council » ?</h3>
+          <ul class="harness-list">
+            <li>Tape simplement <strong><code>council</code></strong> dans T3 Code lorsque tu veux que plusieurs modèles confrontent leurs avis avant de coder.</li>
+            <li><strong>Cas d'usage n°1 (Médical Cochin)</strong> : Vérifier la cohérence d'un nouveau protocole RI (anticoagulants, contre-indications, matériel) entre <code>BiblioOstéo</code> et ton <code>Second Brain</code>.</li>
+            <li><strong>Cas d'usage n°2 (Architecture)</strong> : Avant une refonte de base de données (ex. Supabase dans <code>Archives des Internes</code> ou SQLite dans <code>PatrimoineOS</code>).</li>
+          </ul>
+        </div>
+
+        <div class="harness-card">
+          <h3>🔄 3. Tes Standards Automatiques (@Mrthomaslef)</h3>
+          <ul class="harness-list">
+            <li><strong>Skill <code>mobile-pull-to-refresh</code></strong> : Actif sur toutes tes PWA (tirer vers le bas au doigt ou à la souris en haut de page rafraîchit les données avec retour haptique).</li>
+            <li><strong>Architecture Dual-Data (<code>JSON + embedded_data.js</code>)</strong> : Permet à tes sites de fonctionner à la fois hors-ligne en <code>file://</code>, sur GitHub Pages, et de se rafraîchir en direct via <code>fetch()</code>.</li>
+            <li><strong>Défilement horizontal au trackpad/molette</strong> : Toutes les barres de filtres horizontales convertissent automatiquement le scroll vertical en scroll horizontal sur Mac.</li>
+          </ul>
+        </div>
+
+        <div class="harness-card">
+          <h3>🧠 4. Boucle Complète : PubMed → Biblio → Zotero → Obsidian → Quiz</h3>
+          <ul class="harness-list">
+            <li><strong>Étape 1 (Veille)</strong> : Tu repères un sujet ou un PMID → T3 Code l'ajoute dans <code>BiblioOstéo</code> (ou <code>BiblioMarie</code>) et pousse vers <strong>Zotero</strong>.</li>
+            <li><strong>Étape 2 (Pratique RI)</strong> : Tu exportes la synthèse en <code>[[Wikilink]]</code> dans <code>/Users/thomaslefevre/2nd brain/02 - Radiologie Interventionnelle (RI)</code>.</li>
+            <li><strong>Étape 3 (Enseignement)</strong> : Après un staff ou Bone Club déposé dans <code>Archives des Internes</code>, tu transformes la diapo clé en cas interactif dans <code>QUIZ Imagerie (1 Image 1 Diag)</code>.</li>
+          </ul>
+        </div>
+      `;
+    }
+
+    /* ---------- Tiroir de Lecture Complet (Reader) ---------- */
+    function openReader(id, pushState = true) {
+      const item = getAllNews().find(x => x.id === id);
+      if (!item) return;
+      currentReaderId = id;
+      const catObj = categories.find(c => c.id === item.category_id) || { label: '🤖 IA & Workflow' };
+      const st = statusMap[item.id] || 'todo';
+
+      const kpHtml = (item.key_points_fr || []).map(k => `<li>${esc(k)}</li>`).join('');
+      const stepsHtml = (item.implementation_steps_fr || []).map(s => `<li>${esc(s)}</li>`).join('');
+      const targetCards = (item.target_projects || []).map(pid => {
+        const p = projects.find(x => x.id === pid);
+        if (!p) return '';
+        return `
+          <div style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 10px; padding: 0.65rem 0.8rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.86rem;">${p.emoji} ${esc(p.title)}</div>
+              <div style="font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted);">${esc(p.path)}</div>
+            </div>
+            <button class="btn-action" onclick="closeReader(); setProjectFilter('${p.id}');">
+              Filtrer ce projet
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('readerDoc').innerHTML = `
+        <div class="meta-badges">
+          <span class="badge badge-cat">${esc(catObj.label)}</span>
+          <span class="badge badge-maturity">${esc(item.maturity)}</span>
+          <span class="badge badge-setup">⏱ ${esc(item.setup_time)}</span>
+          <span class="badge badge-setup">💎 ${esc(item.cost_badge)}</span>
+        </div>
+
+        <h1 class="doc-title">${esc(item.title_fr)}</h1>
+
+        <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <span>Source : <strong>${esc(item.source)}</strong> • ${esc(item.date_fr || item.date)}</span>
+          <select class="status-select" onchange="setStatus('${item.id}', this.value)">
+            <option value="todo" ${st === 'todo' ? 'selected' : ''}>🎯 Statut : À tester</option>
+            <option value="doing" ${st === 'doing' ? 'selected' : ''}>🚧 Statut : En cours</option>
+            <option value="done" ${st === 'done' ? 'selected' : ''}>✅ Statut : Implanté</option>
+          </select>
+        </div>
+
+        <div class="doc-block">
+          <h3>🔬 Synthèse &amp; Ce qui change vraiment</h3>
+          <p style="font-size: 0.94rem; line-height: 1.62;">${esc(item.summary_fr)}</p>
+          ${item.technical_breakthrough_fr ? `<p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-top: 0.35rem;">${esc(item.technical_breakthrough_fr)}</p>` : ''}
+        </div>
+
+        ${kpHtml ? `
+          <div class="doc-block">
+            <h3>📌 Points Techniques Clés</h3>
+            <ul class="doc-list">${kpHtml}</ul>
+          </div>
+        ` : ''}
+
+        <div class="doc-block" style="background: var(--bg-callout); border-color: var(--accent);">
+          <h3>🎯 Implantation Concrète dans Ton Workflow</h3>
+          <p style="font-size: 0.93rem; font-weight: 500; line-height: 1.6;">${esc(item.workflow_how_to_fr)}</p>
+          ${stepsHtml ? `<ol class="doc-list" style="margin-top: 0.4rem;">${stepsHtml}</ol>` : ''}
+        </div>
+
+        <div class="doc-block">
+          <h3>🚀 Prompt T3 Code Clé-en-Main (modifiable avant copie)</h3>
+          <textarea id="readerPromptTextarea" class="field-textarea" style="font-family: var(--mono); font-size: 0.8rem; min-height: 115px; background: var(--bg-code); color: var(--text-code);">${esc(item.t3_prompt)}</textarea>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn-action btn-action-primary" onclick="copyText(document.getElementById('readerPromptTextarea').value)">
+              📋 Copier ce Prompt pour T3 Code
+            </button>
+            <button class="btn-action" onclick="exportSingleObsidian('${item.id}')">
+              🧠 Copier en Note Markdown Obsidian (2nd brain)
+            </button>
+            ${item.source_url ? `<a class="btn-action" href="${esc(item.source_url)}" target="_blank" rel="noopener">🔗 Documentation officielle ↗</a>` : ''}
+          </div>
+        </div>
+
+        ${targetCards ? `
+          <div class="doc-block">
+            <h3>🗂️ Tes Projets Locaux Impactés</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">${targetCards}</div>
+          </div>
+        ` : ''}
+      `;
+
+      document.getElementById('readerCopyPromptBtn').onclick = () => {
+        const val = document.getElementById('readerPromptTextarea')?.value || item.t3_prompt;
+        copyText(val);
+      };
+      document.getElementById('readerExportObsidianBtn').onclick = () => exportSingleObsidian(item.id);
+
+      const r = document.getElementById('reader');
+      r.classList.add('open');
+      r.setAttribute('aria-hidden', 'false');
+      r.scrollTop = 0;
+      document.body.classList.add('locked');
+      if (pushState) history.pushState({ id }, '', `#${id}`);
+    }
+
+    function closeReader(fromPop = false) {
+      const r = document.getElementById('reader');
+      r.classList.remove('open');
+      r.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('locked');
+      currentReaderId = null;
+      if (!fromPop && location.hash) history.back();
+    }
+
+    document.getElementById('reader').addEventListener('scroll', e => {
+      const el = e.target;
+      const pct = (100 * el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight)).toFixed(1);
+      document.getElementById('readerProgress').style.width = `${pct}%`;
+    });
+
+    window.addEventListener('popstate', () => {
+      const h = location.hash.slice(1);
+      if (h && getAllNews().some(x => x.id === h)) openReader(h, false);
+      else if (currentReaderId) closeReader(true);
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('addModal').classList.contains('open')) closeAddModal();
+        else if (currentReaderId) closeReader();
+      }
+    });
+
+    /* ---------- Export Obsidian (Second Brain) ---------- */
+    function formatObsidianMarkdown(item) {
+      const projs = (item.target_projects || []).map(pid => {
+        const p = projects.find(x => x.id === pid);
+        return p ? `[[${p.title.split('—')[0].trim()}]]` : pid;
+      }).join(', ');
+
+      return [
+        '---',
+        'tags: [ia, workflow, t3-code, veille-technique]',
+        `domaine: "${item.category_id}"`,
+        `date: "${item.date || new Date().toISOString().slice(0, 10)}"`,
+        `statut: "${statusMap[item.id] || 'À tester'}"`,
+        '---',
+        '',
+        `# ${item.title_fr}`,
+        '',
+        `> [!IMPORTANT] Implantation Workflow (${item.maturity || 'Quick Win'})`,
+        `> ${item.workflow_how_to_fr}`,
+        `> **Projets reliés :** ${projs}`,
+        '',
+        '## Synthèse technique',
+        item.summary_fr,
+        '',
+        item.technical_breakthrough_fr ? `${item.technical_breakthrough_fr}\n` : '',
+        '## Points clés',
+        ...(item.key_points_fr || []).map(k => `- ${k}`),
+        '',
+        '## Prompt T3 Code prêt à lancer',
+        '```text',
+        item.t3_prompt || '',
+        '```',
+        ''
+      ].join('\n');
+    }
+
+    function exportSingleObsidian(id) {
+      const item = getAllNews().find(x => x.id === id);
+      if (!item) return;
+      const md = formatObsidianMarkdown(item);
+      copyText(md, 'Note Markdown Obsidian (YAML + [[Wikilinks]]) copiée !');
+    }
+
+    function exportAllObsidian() {
+      const all = getAllNews();
+      const md = [
+        '---',
+        'tags: [ia, workflow, dashboard, t3-code]',
+        `date: "${new Date().toISOString().slice(0, 10)}"`,
+        'statut: "Actif"',
+        '---',
+        '',
+        '# 🤖 Playbook News AI & Implantation Workflow — Dr Thomas Lefèvre',
+        '',
+        '> [!TIP] Généré depuis ton application **News AI** (`/Users/thomaslefevre/.t3/projects/news-ai`)',
+        `> Contient ${all.length} fiches d'implantation reliées à [[COCHIN·OS]], [[BiblioOstéo Cochin]], [[BiblioMarie]], [[Second Brain]] et [[PatrimoineOS]].`,
+        '',
+        ...all.map(item => [
+          `## ${item.title_fr}`,
+          `- **Statut** : \`${statusMap[item.id] || 'todo'}\` • **Impact** : ${item.maturity} • **Temps** : ${item.setup_time}`,
+          `- **Dans ton workflow** : ${item.workflow_how_to_fr}`,
+          '- **Prompt T3 Code** :',
+          '```text',
+          item.t3_prompt,
+          '```',
+          ''
+        ].join('\n'))
+      ].join('\n');
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Playbook_News_AI_Workflow_Thomas.md';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('✓ Playbook Obsidian (.md) téléchargé !');
+    }
+
+    /* ---------- Ajout d'une piste IA personnalisée ---------- */
+    function openAddModal() {
+      const catSel = document.getElementById('customCat');
+      const projSel = document.getElementById('customProj');
+      catSel.innerHTML = categories.map(c => `<option value="${c.id}">${esc(c.short)}</option>`).join('');
+      projSel.innerHTML = projects.map(p => `<option value="${p.id}">${p.emoji} ${esc(p.title.split('—')[0].trim())}</option>`).join('');
+      document.getElementById('addModal').classList.add('open');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('open');
+    }
+
+    function saveCustomItem() {
+      const title = document.getElementById('customTitle').value.trim();
+      const catId = document.getElementById('customCat').value;
+      const projId = document.getElementById('customProj').value;
+      const summary = document.getElementById('customSummary').value.trim();
+      let prompt = document.getElementById('customPrompt').value.trim();
+
+      if (!title || !summary) {
+        showToast('Renseigne au moins un titre et une description.');
+        return;
+      }
+
+      const proj = projects.find(p => p.id === projId);
+      if (!prompt) {
+        prompt = `Dans mon projet ${proj ? proj.title : ''} (${proj ? proj.path : ''}), implante la fonctionnalité suivante : ${title}. Détails : ${summary}. Respecte mes standards (Pull-to-Refresh, mode sombre, français soigné).`;
+      }
+
+      const newItem = {
+        id: 'custom-' + Date.now(),
+        category_id: catId,
+        date: new Date().toISOString().slice(0, 10),
+        date_fr: "Aujourd'hui (Note perso)",
+        maturity: '⚡ Piste Personnelle',
+        setup_time: '15 min',
+        cost_badge: 'Sur-mesure',
+        source: 'Mon Workflow @Mrthomaslef',
+        title_fr: title,
+        summary_fr: summary,
+        technical_breakthrough_fr: '',
+        key_points_fr: ['Ajouté depuis ton Studio News AI'],
+        target_projects: [projId],
+        workflow_how_to_fr: summary,
+        implementation_steps_fr: ['Copier le prompt T3 Code ci-dessous et l’exécuter dans le projet cible.'],
+        t3_prompt: prompt
+      };
+
+      customItems.unshift(newItem);
+      localStorage.setItem(STORAGE_CUSTOM_KEY, JSON.stringify(customItems));
+      closeAddModal();
+      document.getElementById('customTitle').value = '';
+      document.getElementById('customSummary').value = '';
+      document.getElementById('customPrompt').value = '';
+      switchMode('feed');
+      showToast('✓ Nouvelle piste IA ajoutée en tête de flux !');
+    }
+
+    /* ---------- Rafraîchissement des données + Pull-to-Refresh (Tactile & Souris) ---------- */
+    async function refreshAllData(showFeedback = true) {
+      try {
+        const ts = Date.now();
+        const [newsRes, projRes, liveRes] = await Promise.all([
+          fetch(`data/news.json?t=${ts}`, { cache: 'no-store' }).catch(() => null),
+          fetch(`data/projects.json?t=${ts}`, { cache: 'no-store' }).catch(() => null),
+          fetch(`data/live_signals.json?t=${ts}`, { cache: 'no-store' }).catch(() => null)
+        ]);
+        if (newsRes && newsRes.ok) baseNews = await newsRes.json();
+        if (projRes && projRes.ok) projects = await projRes.json();
+        if (liveRes && liveRes.ok) liveSignals = await liveRes.json();
+      } catch (e) {
+        // Fallback silencieux sur embedded_data.js
+      }
+      await fetchLiveHNFromBrowser(true);
+      renderActiveView();
+      if (showFeedback) {
+        const ptrText = document.getElementById('ptrText');
+        if (ptrText) ptrText.textContent = 'À jour ✓';
+      }
+    }
+
+    function setupPullToRefresh() {
+      const ptrBar = document.getElementById('ptrBar');
+      const ptrText = document.getElementById('ptrText');
+      const ptrArrow = document.getElementById('ptrArrow');
+      let startY = 0;
+      let pullDist = 0;
+      let isPulling = false;
+      let isRefreshing = false;
+      const THRESHOLD = 66;
+
+      const canStartPull = () => {
+        if (isRefreshing) return false;
+        if (currentReaderId) return false;
+        if (document.getElementById('addModal').classList.contains('open')) return false;
+        return window.scrollY <= 1;
+      };
+
+      const onStart = (clientY) => {
+        if (!canStartPull()) return;
+        startY = clientY;
+        pullDist = 0;
+        isPulling = true;
+      };
+
+      const onMove = (clientY, ev) => {
+        if (!isPulling || isRefreshing) return;
+        const dy = clientY - startY;
+        if (dy > 0 && window.scrollY <= 0) {
+          pullDist = Math.min(115, dy * 0.52);
+          if (pullDist > 8) {
+            if (ev && ev.cancelable) ev.preventDefault();
+            ptrBar.classList.add('pulling');
+            ptrBar.style.height = `${pullDist}px`;
+            ptrBar.style.opacity = String(Math.min(1, pullDist / THRESHOLD));
+            if (ptrArrow) {
+              ptrArrow.style.transform = pullDist >= THRESHOLD ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+            ptrText.textContent = pullDist >= THRESHOLD
+              ? 'Relâcher pour actualiser'
+              : 'Tirer pour actualiser';
+          }
+        } else {
+          pullDist = 0;
+          ptrBar.style.height = '0px';
+          ptrBar.style.opacity = '0';
+        }
+      };
+
+      const onEnd = async () => {
+        if (!isPulling || isRefreshing) return;
+        isPulling = false;
+        ptrBar.classList.remove('pulling');
+        if (pullDist >= THRESHOLD) {
+          isRefreshing = true;
+          if (navigator.vibrate) navigator.vibrate(12);
+          ptrBar.classList.add('refreshing');
+          ptrText.textContent = 'Actualisation...';
+          await refreshAllData(true);
+          setTimeout(() => {
+            ptrBar.classList.remove('refreshing');
+            ptrBar.style.height = '0px';
+            ptrBar.style.opacity = '0';
+            isRefreshing = false;
+          }, 550);
+        } else {
+          ptrBar.style.height = '0px';
+          ptrBar.style.opacity = '0';
+        }
+        pullDist = 0;
+      };
+
+      // Tactile (iOS / Android)
+      window.addEventListener('touchstart', e => {
+        if (e.touches.length === 1) onStart(e.touches[0].clientY);
+      }, { passive: true });
+      window.addEventListener('touchmove', e => {
+        if (e.touches.length === 1) onMove(e.touches[0].clientY, e);
+      }, { passive: false });
+      window.addEventListener('touchend', onEnd, { passive: true });
+      window.addEventListener('touchcancel', onEnd, { passive: true });
+
+      // Souris (Desktop / Mac)
+      window.addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        const tag = (e.target && e.target.tagName) || '';
+        if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(tag)) return;
+        onStart(e.clientY);
+      });
+      window.addEventListener('mousemove', e => {
+        if (isPulling) onMove(e.clientY, e);
+      });
+      window.addEventListener('mouseup', () => {
+        if (isPulling) onEnd();
+      });
+
+      // Scroll horizontal fluide à la molette / trackpad sur les barres de filtres
+      window.addEventListener('wheel', e => {
+        if (e.ctrlKey || e.metaKey) return;
+        const dy = e.deltaY || 0;
+        const dx = e.deltaX || 0;
+        if (!dy && !dx) return;
+        const horiz = e.target && e.target.closest ? e.target.closest('.pills-scroll, .mode-tabs') : null;
+        if (horiz && horiz.scrollWidth > horiz.clientWidth && Math.abs(dy) > Math.abs(dx)) {
+          horiz.scrollLeft += dy;
+          e.preventDefault();
+        }
+      }, { passive: false });
+    }
+
+    /* ---------- Initialisation ---------- */
+    (function init() {
+      initTheme();
+      setupPullToRefresh();
+      renderActiveView();
+      const h = location.hash.slice(1);
+      if (h && getAllNews().some(x => x.id === h)) {
+        openReader(h, false);
+      }
+    })();
+  </script>
+</body>
+</html>

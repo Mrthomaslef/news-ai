@@ -1,4 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#e11d48"/>
-  <text x="32" y="32" dy="0.35em" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="26" font-weight="600" fill="#ffffff">NA</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#181512"/>
+      <stop offset="100%" stop-color="#292118"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="20" y1="20" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bgGrad)"/>
+  <rect x="4" y="4" width="120" height="120" rx="24" stroke="#f59e0b" stroke-opacity="0.22" stroke-width="2"/>
+  <!-- Radar / Pulse rings -->
+  <circle cx="64" cy="64" r="42" stroke="url(#accentGrad)" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="6 6"/>
+  <circle cx="64" cy="64" r="28" stroke="url(#accentGrad)" stroke-opacity="0.45" stroke-width="2"/>
+  <!-- Workflow nodes -->
+  <path d="M36 76 L54 52 L74 66 L94 38" stroke="url(#accentGrad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="36" cy="76" r="6" fill="#fde68a"/>
+  <circle cx="54" cy="52" r="6" fill="#fbbf24"/>
+  <circle cx="74" cy="66" r="6" fill="#f59e0b"/>
+  <circle cx="94" cy="38" r="8" fill="#ea580c" stroke="#fef3c7" stroke-width="2.5"/>
+  <!-- Sparkle / AI star top left -->
+  <path d="M38 30 L40.5 36.5 L47 39 L40.5 41.5 L38 48 L35.5 41.5 L29 39 L35.5 36.5 Z" fill="#fde68a"/>
+  <!-- Label badge bottom -->
+  <rect x="30" y="90" width="68" height="20" rx="10" fill="#f59e0b" fill-opacity="0.16" stroke="#f59e0b" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="64" y="104" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-size="11.5" font-weight="800" letter-spacing="1.2" fill="#fef3c7">NEWS·AI</text>
 </svg>

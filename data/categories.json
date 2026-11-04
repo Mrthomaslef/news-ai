@@ -1,0 +1,32 @@
+[
+  {
+    "id": "agents_harness",
+    "label": "🤖 Agents, T3 Code & MCP",
+    "short": "🤖 Agents & MCP",
+    "description": "Orchestration multi-modèles (Gemini 4 Argon + Claude Opus), Council, Subagents parallèles, Context Caching et serveurs MCP."
+  },
+  {
+    "id": "medical_vision",
+    "label": "🩻 Vision, Imagerie & PDF",
+    "short": "🩻 Vision & Radio",
+    "description": "VLM médicaux, OCR PDF.js haute fidélité, pré-annotation de coupes IRM/TDM/Écho, génération de quiz et CR-types radiologiques."
+  },
+  {
+    "id": "rag_biblio_brain",
+    "label": "📚 Biblio, PubMed & 2nd Brain",
+    "short": "📚 Biblio & Brain",
+    "description": "Veille automatisée PubMed → JSON structuré → Zotero → Obsidian (Second Brain Cochin) avec anonymisation RGPD stricte."
+  },
+  {
+    "id": "local_first_webgpu",
+    "label": "⚡ Local-First, SQLite & WebGPU",
+    "short": "⚡ WebGPU & Data",
+    "description": "Inférence locale dans le navigateur (WebGPU / Transformers.js), recherche sémantique hors-ligne et pipelines SQLite/Supabase."
+  },
+  {
+    "id": "voice_automation_iot",
+    "label": "🎙️ Voix, Automatisation & IoT",
+    "short": "🎙️ Voix & Auto",
+    "description": "Dictée vocale radiologique structurée, agents Python locaux (iMessage/Sheet/Takeout), Mac mini M4 et ESP32 Xiaozhi."
+  }
+]

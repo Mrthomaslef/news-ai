@@ -1,0 +1,260 @@
+[
+  {
+    "id": "cochin-os",
+    "title": "COCHIN·OS — Portail Internes Radio B",
+    "category": "Radiologie & Hôpital Cochin",
+    "emoji": "🦴",
+    "path": "/Users/thomaslefevre/.t3/projects/guide-interne-cochin-os",
+    "prodUrl": "https://mrthomaslef.github.io/guide-interne-cochin-os/",
+    "githubUrl": "https://github.com/Mrthomaslef/guide-interne-cochin-os",
+    "stack": "PWA Statique • Hub Unifié (Planning, Annuaire 1XXXX, Biblio, Quiz, Infiltrations, Archives)",
+    "summary": "Portail « Papier Radio / Négatoscope » donnant accès en 1 tap aux 7 outils des internes de Radiologie B à Cochin.",
+    "aiOpportunities": [
+      {
+        "title": "Recherche fédérée Omnibox (⌘K) sur les 7 apps Cochin",
+        "impact": "Quick Win",
+        "detail": "Un champ unique en haut de COCHIN·OS qui cherche simultanément un poste DECT/console dans l'Annuaire, une fiche parmi les 75 gestes du Guide Infiltrations, un article BiblioOstéo et un cours des Archives.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/guide-interne-cochin-os, ajoute une barre de recherche universelle (Omnibox ⌘K et bouton mobile) qui indexe en local les postes de ./annuaire/, les 75 fiches de ./infiltrations/guide-data.json et les articles de BiblioOstéo pour ouvrir directement le bon outil ou numéro en 1 tap."
+      },
+      {
+        "title": "Assistant « Garde & Prise de Poste » hors-ligne",
+        "impact": "Haute Valeur",
+        "detail": "Arbre de décision instantané pour l'interne (gestion des anticoagulants Eliquis/Plavix avant geste RI, protocole allergie iode, numéros d'urgence Achard/Ollier).",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/guide-interne-cochin-os, crée un tiroir rapide « Check-list Pré-Geste RI & Anticoagulants » basé sur les fiches de /Users/thomaslefevre/2nd brain/02 - Radiologie Interventionnelle (RI) et le Guide Infiltrations."
+      }
+    ]
+  },
+  {
+    "id": "biblioosteo",
+    "title": "BiblioOstéo Cochin",
+    "category": "Radiologie & Hôpital Cochin",
+    "emoji": "📚",
+    "path": "/Users/thomaslefevre/.t3/projects/biblioosteo",
+    "prodUrl": "https://mrthomaslef.github.io/biblioosteo/",
+    "githubUrl": "https://github.com/Mrthomaslef/biblioosteo",
+    "stack": "PWA Vanilla JS • PubMed E-Utilities • Zotero API v3 • PDFs locaux • Python Builder",
+    "summary": "Veille bibliographique en RI & imagerie ostéo-articulaire calquée sur l'Agenda Interventionnel Cochin avec synchro Zotero.",
+    "aiOpportunities": [
+      {
+        "title": "Pipeline PMID / PDF → Fiche structurée FR + Lien Second Brain automatique",
+        "impact": "Quick Win",
+        "detail": "En passant un simple PMID ou PDF dans `scripts/add_article.py`, générer automatiquement le résumé structuré FR, le protocole technique (aiguille, fenêtre bléomycine, suivi IRM), le lien `cochin_link` et la note Obsidian dans `2nd brain/05 - Biblio`.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblioosteo/scripts/add_article.py, ajoute un mode qui prend une liste de PMIDs ou un PDF local, récupère les métadonnées PubMed + Impact Factor, structure automatiquement la fiche JSON (title_fr, summary_fr_short, protocol_fr, cochin_link, key_points_fr), met à jour data/embedded_data.js et crée la fiche correspondante dans /Users/thomaslefevre/2nd brain/05 - Biblio, Zotero & Enseignement."
+      },
+      {
+        "title": "Mode « Comparateur de Protocoles RI » (ex. Cryo Desmoïdes vs RF Ostéome)",
+        "impact": "Moyen Terme",
+        "detail": "Vue tableau synthétique extrayant des 24+ articles les paramètres opératoires exacts (cycles de congélation, marges de sécurité, hydrodissection, suivi).",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblioosteo/index.html, ajoute un onglet « ⚡ Protocoles RI comparés » qui synthétise sous forme de tableau filtrable les paramètres techniques extraits de chaque article (indication, matériel, protocole, suivi)."
+      }
+    ]
+  },
+  {
+    "id": "biblio-marie",
+    "title": "BiblioMarie — Infectiologie Pédiatrique",
+    "category": "Biblio, Science & Second Brain",
+    "emoji": "🧸",
+    "path": "/Users/thomaslefevre/.t3/projects/biblio-marie",
+    "prodUrl": "https://mrthomaslef.github.io/biblio-marie/",
+    "githubUrl": "https://github.com/Mrthomaslef/biblio-marie",
+    "stack": "PWA Éditoriale (Source Serif 4 + Inter) • JSON/PubMed • Export Zotero API / RIS / BibTeX",
+    "summary": "Veille bibliographique pour Marie en pédiatrie générale et infectiologie pédiatrique/adulte avec Impact Factor et Zotero.",
+    "aiOpportunities": [
+      {
+        "title": "Alerte automatique PubMed RSS sur les revues à haut Impact Factor (NEJM, Lancet, JAMA Peds, PIDJ)",
+        "impact": "Quick Win",
+        "detail": "Script Python hebdomadaire qui détecte les nouveaux essais randomisés et recommandations GPIP/SPILF/ECIL et prépare les brouillons dans `data/editorial.json`.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblio-marie/scripts/, crée un script discover_pubmed.py qui interroge l'API NCBI E-utilities sur les essais cliniques et guidelines récents en infectiologie pédiatrique (GPIP, SPILF, VRS, sepsis, IOA) et pré-remplit les candidats à valider pour data/editorial.json."
+      },
+      {
+        "title": "Mode Audio « Podcast Flash 2 min » (Web Speech / TTS)",
+        "impact": "Quick Win",
+        "detail": "Bouton d'écoute mains-libres dans le lecteur d'article pour écouter la synthèse française et « En pratique » en déplacement.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/biblio-marie/index.html, ajoute un bouton « 🎧 Écouter la synthèse » dans la barre du lecteur d'article (avec contrôle de vitesse 1x / 1.25x / 1.5x via speechSynthesis) et intègre le standard Pull-to-Refresh mobile."
+      }
+    ]
+  },
+  {
+    "id": "archive-des-internes",
+    "title": "Archives des Internes — COCHIN·OS (07)",
+    "category": "Radiologie & Hôpital Cochin",
+    "emoji": "🗂️",
+    "path": "/Users/thomaslefevre/.t3/projects/archive-des-internes",
+    "prodUrl": "https://mrthomaslef.github.io/guide-interne-cochin-os/archives/",
+    "githubUrl": null,
+    "stack": "PDF.js • Supabase Storage & Postgres • Recherche plein texte par diapo • Mode Diagnostic Masqué",
+    "summary": "Partage et visionneuse des présentations PDF (Bone Club, Cas du mardi, Biblio du vendredi, Cours) avec indexation par diapo.",
+    "aiOpportunities": [
+      {
+        "title": "Auto-Tagging & Résumé à l'import du PDF + Conversion 1-Clic vers Quiz Imagerie",
+        "impact": "Haute Valeur",
+        "detail": "Lors du dépôt d'un PDF avec PDF.js, extraire automatiquement du texte des diapos la modalité (IRM/TDM/Radio), l'articulation, les mots-clés sémiologiques et permettre d'exporter une diapo clé vers Quiz Imagerie.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/archive-des-internes, améliore le flux de dépôt PDF pour détecter automatiquement depuis le texte extrait par PDF.js la catégorie, la région anatomique, la modalité et proposer les synonymes diagnostiques."
+      }
+    ]
+  },
+  {
+    "id": "quiz-imagerie",
+    "title": "QUIZ Imagerie Cochin — 1 Image · 1 Diagnostic",
+    "category": "Radiologie & Hôpital Cochin",
+    "emoji": "🩻",
+    "path": "/Users/thomaslefevre/.t3/projects/quiz-image-3",
+    "prodUrl": "https://mrthomaslef.github.io/quiz-imagerie/",
+    "githubUrl": "https://github.com/Mrthomaslef/quiz-imagerie",
+    "stack": "React 18 • Vite • Framer Motion • Visionneuse fenêtrage/zoom • Studio Cmd+V",
+    "summary": "Défi diagnostique rapide sur image unique avec validation souple (synonymes + tolérance orthographique) et Studio d'ajout.",
+    "aiOpportunities": [
+      {
+        "title": "Générateur automatique de synonymes, variantes orthographiques et indices sémiologiques dans #/studio",
+        "impact": "Quick Win",
+        "detail": "Quand tu colles une image (`Cmd+V`) et saisis le diagnostic principal dans `#/studio`, pré-remplir automatiquement tous les synonymes français/anglais, acronymes et mots-clés requis pour la validation souple.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/quiz-image-3, enrichis le Studio (#/studio) avec un dictionnaire ostéo-articulaire intelligent qui génère automatiquement les synonymes, variantes d'accents/abréviations, la région anatomique et les indices sémiologiques dès qu'on tape le nom de la pathologie."
+      },
+      {
+        "title": "Révision espacée (SRS / Anki-like) sur les cas « À revoir »",
+        "impact": "Quick Win",
+        "detail": "Prioriser automatiquement dans le mode Focus Quiz les cas échoués il y a 1, 3 ou 7 jours.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/quiz-image-3, ajoute un algorithme de répétition espacée léger dans localStorage pour proposer en priorité les cas diagnostiques échoués ou hésitants."
+      }
+    ]
+  },
+  {
+    "id": "guide-infiltration",
+    "title": "Guide Infiltrations — COCHIN·OS (06)",
+    "category": "Radiologie & Hôpital Cochin",
+    "emoji": "💉",
+    "path": "/Users/thomaslefevre/.t3/projects/guide-infiltration",
+    "prodUrl": "https://mrthomaslef.github.io/guide-interne-cochin-os/infiltrations/",
+    "githubUrl": null,
+    "stack": "PWA Mobile • 213 pages & 75 fiches structurées (`guide-data.json`)",
+    "summary": "Manuel complet des 75 procédures d'infiltrations, arthrographies et biopsies ostéo-articulaires radioguidées.",
+    "aiOpportunities": [
+      {
+        "title": "Mode « Préparation Plateau & Check-list Salle » par procédure",
+        "impact": "Quick Win",
+        "detail": "Afficher en haut de chacune des 75 fiches un bandeau ultra-lisible pour le manip/interne : aiguille exacte (G/longueur), produit de contraste, corticoïde (Hydrocortancyl / Diprostène / Altim), position patient et rayon directeur.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/guide-infiltration, ajoute en haut de chaque procédure un encart résumé « Plateau & Paramètres Clés » (Aiguille, Produit, Position, Cible) extrait de guide-data.json pour une lecture en 3 secondes en salle."
+      }
+    ]
+  },
+  {
+    "id": "second-brain",
+    "title": "Second Brain Obsidian — Radiologie B Cochin",
+    "category": "Biblio, Science & Second Brain",
+    "emoji": "🧠",
+    "path": "/Users/thomaslefevre/2nd brain",
+    "prodUrl": null,
+    "githubUrl": null,
+    "stack": "Obsidian Markdown • YAML Frontmatter • [[Wikilinks]] • Piloté par T3 Code",
+    "summary": "Cerveau numérique médical et interventionnel (Prise de poste, Fiches RI, CR-Types IRM/TDM, RCP Sarcomes, Biblio).",
+    "aiOpportunities": [
+      {
+        "title": "Script d'audit du graphe Obsidian & Liaison automatique avec BiblioOstéo et l'Agenda RI",
+        "impact": "Quick Win",
+        "detail": "Détecter les notes orphelines, vérifier l'anonymisation RGPD (absence totale de dates de naissance / NIP) et injecter automatiquement les références PMID de BiblioOstéo dans les fiches RI correspondantes.",
+        "prompt": "Crée un script Python dans /Users/thomaslefevre/2nd brain qui vérifie l'anonymisation RGPD de toutes les notes Markdown, liste les [[Wikilinks]] manquants et relie chaque fiche de '02 - Radiologie Interventionnelle (RI)' aux articles correspondants de /Users/thomaslefevre/.t3/projects/biblioosteo/data/articles.json."
+      }
+    ]
+  },
+  {
+    "id": "agenda-interventionnel",
+    "title": "Cochin RI — Agenda Interventionnel & Planning Internes",
+    "category": "Radiologie & Hôpital Cochin",
+    "emoji": "📅",
+    "path": "/Users/thomaslefevre/Documents/Agendainterventionnel",
+    "prodUrl": "https://mrthomaslef.github.io/agenda-cochin/",
+    "githubUrl": "https://github.com/Mrthomaslef/agenda-cochin",
+    "stack": "Python Sync (`sync_sheet.py`, `fetch_imessages.py`, `fetch_emails.py`) • Google Sheets • PWA",
+    "summary": "Synchronisation temps réel du planning de Radiologie Interventionnelle Cochin, vacations, consultations et biopsies.",
+    "aiOpportunities": [
+      {
+        "title": "Briefing automatique de la vacation RI du lendemain (Croisement Planning + Fiches 2nd Brain + Biblio)",
+        "impact": "Haute Valeur",
+        "detail": "Générer en 1 commande un résumé de préparation pour ta vacation du lendemain : liste des actes prévus (ex. cryoablation desmoïde, biopsie sacrée, cimentoplastie) avec rappel automatique de tes fiches techniques du Second Brain.",
+        "prompt": "Crée un script briefing_ri.py dans /Users/thomaslefevre/Documents/Agendainterventionnel qui lit les actes à venir via sync_sheet.py et génère un briefing Markdown croisé avec les fiches techniques de /Users/thomaslefevre/2nd brain/02 - Radiologie Interventionnelle (RI)."
+      }
+    ]
+  },
+  {
+    "id": "patrimoine-os",
+    "title": "PatrimoineOS — Banque, Crypto EVM & Pokémon Collectr",
+    "category": "Finance & Quotidien",
+    "emoji": "💰",
+    "path": "/Users/thomaslefevre/.t3/projects/finance",
+    "prodUrl": "http://localhost:3000",
+    "githubUrl": null,
+    "stack": "Next.js 15 • React 19 • better-sqlite3 • GoCardless DSP2 • RPC EVM / DeFiLlama • Collectr",
+    "summary": "Suivi local unifié du patrimoine sur 3 piliers : Crédit Mutuel, MetaMask & Ledger (6 chaînes EVM) et scellés/cartes Pokémon.",
+    "aiOpportunities": [
+      {
+        "title": "Catégorisation intelligente locale des lignes CSV/DSP2 Crédit Mutuel & Détection d'anomalies",
+        "impact": "Quick Win",
+        "detail": "Classer automatiquement chaque dépense/revenu bancaire (santé, garde d'enfant Pajemploi, abonnements IA, épargne, loisirs) dans SQLite avec graphique d'évolution du taux d'épargne mensuel.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/finance, ajoute un moteur de catégorisation automatique des transactions Crédit Mutuel (src/lib/credit-mutuel.ts) avec règles personnalisables persistées dans SQLite et vue analytique mensuelle Cashflow / Épargne."
+      },
+      {
+        "title": "Snapshots historiques automatiques & Courbe de valeur nette consolidée (EUR)",
+        "impact": "Quick Win",
+        "detail": "Enregistrer dans `data/finance.db` un point quotidien de la valeur des 3 piliers (Banque + Crypto + Pokémon) pour tracer la performance réelle et les plus-values latentes.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/finance, ajoute une table SQLite `net_worth_snapshots` qui enregistre automatiquement l'historique quotidien des 3 piliers (Crédit Mutuel, Wallets EVM, Collectr Pokémon) et affiche une courbe interactive d'évolution."
+      }
+    ]
+  },
+  {
+    "id": "tapp-store-allinone",
+    "title": "Tapp Store & Agent Tracking (Google AI Ultra / Claude)",
+    "category": "Jeux, Hardware & Store",
+    "emoji": "🛍️",
+    "path": "/Users/thomaslefevre/.t3/projects/allinone",
+    "prodUrl": "https://mrthomaslef.github.io/allinone/",
+    "githubUrl": "https://github.com/Mrthomaslef/allinone",
+    "stack": "PWA Store • GitHub API Sync • Python Daemon (`gemini_ultra_daemon.py`) • Cloudflare Tunnel",
+    "summary": "App Store mobile unifié regroupant toutes tes webapps + dashboard temps réel des quotas et coûts API Gemini 4 Argon & Claude.",
+    "aiOpportunities": [
+      {
+        "title": "Intégration directe de News AI dans le Tapp Store + Recommandation de modèle selon ton quota live",
+        "impact": "Quick Win",
+        "detail": "Ajouter News AI dans `projects.json` du Tapp Store et afficher dans Agent Tracking quel modèle utiliser maintenant selon le pourcentage restant avant le reset de 5h.",
+        "prompt": "Dans /Users/thomaslefevre/.t3/projects/allinone/projects.json, ajoute l'application News AI et enrichis gemini-ultra/index.html avec un indicateur de rythme de consommation (Burn Rate) avant la prochaine heure de reset."
+      }
+    ]
+  },
+  {
+    "id": "dicomviewer-radio-thomas",
+    "title": "TPack PACS (DICOM Viewer) & QUIZ Cochin MSK (radio-thomas)",
+    "category": "Radiologie & Hôpital Cochin",
+    "emoji": "🖥️",
+    "path": "/Users/thomaslefevre/Documents/dicomviewer",
+    "prodUrl": "https://mrthomaslef.github.io/dicomviewer/",
+    "githubUrl": "https://github.com/Mrthomaslef/dicomviewer",
+    "stack": "TypeScript • React • Vite • DICOM / .tpack • Vercel & Supabase (`radio-thomas`)",
+    "summary": "Console PACS pédagogique en ligne et banque de cas cliniques d'imagerie musculosquelettique.",
+    "aiOpportunities": [
+      {
+        "title": "Export 1-Clic d'une coupe clé du DICOM Viewer vers QUIZ Imagerie (1 Image 1 Diag)",
+        "impact": "Haute Valeur",
+        "detail": "Depuis TPack PACS, capturer la coupe courante avec son fenêtrage optimal, anonymiser les métadonnées et générer directement l'entrée JSON pour `quiz-image-3`.",
+        "prompt": "Dans /Users/thomaslefevre/Documents/dicomviewer, ajoute un bouton « Exporter vers Quiz Imagerie » qui capture le canvas de la coupe active avec son fenêtrage actuel et génère la fiche JSON compatible avec /Users/thomaslefevre/.t3/projects/quiz-image-3."
+      }
+    ]
+  },
+  {
+    "id": "family-daily-apps",
+    "title": "Écosystème Famille & Quotidien (Agenda Famille, AssMat, Photo, Voyages, Forestia)",
+    "category": "Finance & Quotidien",
+    "emoji": "🏡",
+    "path": "/Users/thomaslefevre/Documents/agenda-famille",
+    "prodUrl": "https://mrthomaslef.github.io/agenda-famille/",
+    "githubUrl": "https://github.com/Mrthomaslef/agenda-famille",
+    "stack": "PWA • Python Sync (`sync_family_agenda.py`, `process_takeout.py`) • Swift/DOSBox (`forestia-mobile`)",
+    "summary": "Outils familiaux sur-mesure : planning partagé Marie & Thomas + gardes Cochin + Mabrouka, paie AssMat Pajemploi, tri Google Photos APFS et voyages.",
+    "aiOpportunities": [
+      {
+        "title": "Synchronisation croisée Gardes Cochin → Agenda Famille → Calcul automatique des heures AssMat",
+        "impact": "Haute Valeur",
+        "detail": "Relier automatiquement les gardes/vacations de `cochin_gardes.json` et `agenda-famille` au calculateur mensuel `Assistantematernelle` pour pré-remplir les jours de présence de Mabrouka.",
+        "prompt": "Crée un pont entre /Users/thomaslefevre/Documents/agenda-famille/family_data.json et /Users/thomaslefevre/Assistantematernelle pour pré-remplir automatiquement les horaires et jours de garde du mois dans le calculateur Pajemploi."
+      }
+    ]
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "name": "News AI — Veille Technique & Workflow (@Mrthomaslef)",
+  "short_name": "News AI",
+  "description": "Veille technique IA sur-mesure & guide d'implantation directe dans les projets et le workflow de Thomas Lefèvre (COCHIN·OS, BiblioOstéo, Second Brain, PatrimoineOS, T3 Code).",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#faf6ee",
+  "theme_color": "#faf6ee",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
