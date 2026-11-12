@@ -46,8 +46,11 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    /* Touch screens only: on Mac (Safari), contain on html blocks trackpad scrolling */
+    @media (hover: none) and (pointer: coarse) {
+      html, body { overscroll-behavior-y: contain; }
+    }
     html, body {
-      overscroll-behavior-y: contain;
       background: var(--bg);
       color: var(--ink);
       font-family: var(--sans);
